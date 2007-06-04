@@ -66,30 +66,32 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	return [job autorelease];
 }
 
+/*! Designated initializer
+*/
 - (id)init {
-	self = [super init];
-	pathFrom = nil;
-	pathTo = nil;
-	jobName = nil;
-	rsyncPath = [[[NSUserDefaults standardUserDefaults] objectForKey:@"rsyncPath"] copy];
-	// sane defaults:
-	copyExtended = NO;
-	runAsRoot = NO;
-	copyHidden = NO;
-	deleteChanged = YES;
-	scheduled = NO;
-	pathToPlist = nil;
-	excludeList = [[NSMutableArray arrayWithCapacity:1] retain];
+	if ((self = [super init]) != nil) {
+		pathFrom = nil;
+		pathTo = nil;
+		jobName = nil;
+		rsyncPath = [[[NSUserDefaults standardUserDefaults] objectForKey:@"rsyncPath"] copy];
+		// sane defaults:
+		copyExtended = NO;
+		runAsRoot = NO;
+		copyHidden = NO;
+		deleteChanged = YES;
+		scheduled = NO;
+		pathToPlist = nil;
+		excludeList = [[NSMutableArray arrayWithCapacity:1] retain];
+	}
 	return self;
 }
 
-- (id)initWithPathFrom:(NSString *)path1 
-				pathTo:(NSString *)path2
-			   jobName:(NSString *)name{
-	self = [self init];
-	[self setPathFrom: path1];
-	[self setPathTo: path2];
-	[self setJobName: name];
+- (id)initWithPathFrom:(NSString *)path1 pathTo:(NSString *)path2 jobName:(NSString *)name {
+	if ((self = [self init]) != nil) {
+		[self setPathFrom: path1];
+		[self setPathTo: path2];
+		[self setJobName: name];
+	}
 	return self;
 }
 

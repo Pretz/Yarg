@@ -29,7 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	IBOutlet NSTableView *windowList;
 	IBOutlet NSWindow *createJobPanel;
 	IBOutlet NSWindow *mainView;
-//	NSMutableArray *jobs;
 	IBOutlet NSTextField *jobName;
 	IBOutlet NSTextField *pathFrom;
 	IBOutlet NSTextField *pathTo;
@@ -51,13 +50,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	IBOutlet NSWindow *passwordPanel;
 	IBOutlet NSTextField *passwordRequestText;
 	IBOutlet NSTextField *passwordEntryField;
+	
+	@private
 	NSUserDefaults *sharedDefaults;
 	bool modifying;
 	bool basicMode;
 	NSMutableDictionary *jobsDictionary;
-	
-	NSDateComponents * defaultTime;
-
+	NSDateComponents *defaultTime;
 }
 - (IBAction)deleteJob:(id)sender;
 - (IBAction)modifyJob:(id)sender;
@@ -73,13 +72,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)toggleDrawer:(id)sender;
 - (IBAction)cancelPassword:(id)sender;
 - (IBAction)okayPassword:(id)sender;
-- (void) locateDirWithOpenPanel:(NSOpenPanel *)op forField:(NSTextField *)field;
-//- (NSMutableArray *)jobs;
-//- (void)setJobs:(NSMutableArray *)jobbs;
+
+- (void)locateDirWithOpenPanel:(NSOpenPanel *)op forField:(NSTextField *)field;
 - (void)dismissSheet;
 - (void)editSelectedJob;
-- (NSWindow *) mainWindow;
-- (NSWindow *) backupWindow;
-- (void) freakoutAlertTitle:(NSString *)alertTitle Text: (NSString *)alertText;
-- (void) applicationTerminating:(id)notification;
+- (void)freakoutAlertTitle:(NSString *)alertTitle Text: (NSString *)alertText;
+- (void)applicationTerminating:(id)notification;
 @end

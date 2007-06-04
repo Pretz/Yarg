@@ -36,11 +36,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 }
 @end
 
+
+#ifdef IS_DEVELOPMENT
 void smartLog(NSString *format, ...) {
 	va_list ap;
 	va_start(ap, format);
-#ifdef IS_DEVELOPMENT
+
 	NSLogv(format, ap);
-#endif
 	va_end(ap);
+#else
+inline void smartLog(NSString *format, ...) {
+#endif
 }

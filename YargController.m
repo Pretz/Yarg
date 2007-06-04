@@ -18,7 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #import "YargController.h"
 
-
+// A few internal functions I only want to use within YargController
 @interface YargController (private)
 - (void) shrinkBackupWindow;
 - (void) growBackupWindow;
@@ -28,92 +28,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 @end
 
 
-@implementation YargController
+@implementation YargController 
 
-- (id)init {
-	self = [super init];
-	modifying = NO;
-	defaultTime = [[NSDateComponents alloc] init];
-	[defaultTime setHour: 16];
-	[defaultTime setMinute:0];
-	sharedDefaults = [[NSUserDefaults standardUserDefaults] retain];
-	[sharedDefaults registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
-		@"/usr/bin/rsync", @"rsyncPath", @"", @"defaultExcludeList", nil]];
-	return self;
-}
-
-- (void)awakeFromNib {
-	// sharedDefaults:Jobs is a dictionary containing NameOfJob:DictOfJob pairs
-	// as spit out from Job#asSerializedDictionary and potentially stored
-	// in an NSUserDefaults plist.
-	if ([sharedDefaults dictionaryForKey:@"Jobs"] == nil) {
-		jobsDictionary = [[NSMutableDictionary dictionary] retain];
-	} else {
-		jobsDictionary = [[NSMutableDictionary dictionaryWithDictionary:[sharedDefaults dictionaryForKey:@"Jobs"]] retain];
-	}
-	NSAssert([jobsDictionary isKindOfClass:[NSMutableDictionary class]] == YES, @"jobsDictionary is not an NSMutableDictionary");
-	[sharedDefaults setObject:jobsDictionary forKey:@"Jobs"];
-	NSEnumerator *jobEnum = [jobsDictionary objectEnumerator];
-	NSDictionary *job;
-	while ((job = [jobEnum nextObject])) {
-		[jobList addObject:[Job jobFromDict:job]];
-	}
-	// *** OLD LAUNCHD PLIST JOB LOADING CODE: ***
-	/*
-	NSFileManager * fileManager = [NSFileManager defaultManager];
-	// Load yarg plists from all system libraries:
-	NSArray * allLibraries = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,NSAllDomainsMask,YES);
-	NSString *currentPath;
-	for (unsigned i = 0; i < [allLibraries count]; i++) {
-		currentPath = [[allLibraries objectAtIndex:i] stringByAppendingPathComponent:@"LaunchAgents"];
-		NSLog(@"scanning: %@", currentPath);
-		BOOL isDir;
-		if ([fileManager fileExistsAtPath:currentPath isDirectory:&isDir] && isDir) {
-			NSLog(@"found %@", currentPath);
-			NSArray * files = [fileManager directoryContentsAtPath:currentPath];
-			[fileManager changeCurrentDirectoryPath:currentPath];
-			for (unsigned x = 0; x < [files count]; x++) {
-				if ([[files objectAtIndex:x] hasPrefix:@"com.yarg."]){
-					NSLog(@"adding: %@", [files objectAtIndex: x]);
-					[jobList addObject:[Job jobFromPlist:[currentPath stringByAppendingPathComponent:[files objectAtIndex:x]]]];
-				}
-			}
-		}
-	}
-	*/
-//	[self shrinkBackupWindow];
-	
-	/* Set cells in TableView to truncate at beginning instead of default end */
-	NSTextFieldCell *from = [[windowList tableColumnWithIdentifier:@"FromColumn"] dataCell];
-	NSTextFieldCell *to = [[windowList tableColumnWithIdentifier:@"ToColumn"] dataCell];
-	[from setLineBreakMode:NSLineBreakByTruncatingHead];
-	[to setLineBreakMode:NSLineBreakByTruncatingHead];
-	
-	NSRect frame = [createJobPanel frame];
-	frame.origin.x -= 100;
-	frame.size.width -= 200;
-	[createJobPanel setFrame:frame display:YES];
-	
-	NSArray * subviews = [[[optBox subviews] objectAtIndex:0] subviews];
-	for (unsigned x = 0; x < [subviews count]; x++) {
-		[[subviews objectAtIndex:x] setEnabled:NO];
-	}
-	basicMode = YES;
-	NSNotificationCenter * defaultCenter = [NSNotificationCenter defaultCenter];
-	[defaultCenter addObserver:self 
-					  selector:@selector(applicationTerminating:)
-						  name:@"NSApplicationWillTerminateNotification" 
-						object:nil];
-		
-}
-
-- (NSWindow *)mainWindow {
-	return mainView;
-}
-
-- (NSWindow *)backupWindow {
-	return createJobPanel;
-}
+/*******    IBAction functions called from GUI user interaction    ********
+********/
 
 - (IBAction)deleteJob:(id)sender
 {
@@ -140,39 +58,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[self editSelectedJob];
 }
 
--(void)editSelectedJob {
-	Job * job = [self activeJob];
-	[jobName setStringValue: [job jobName]];
-	[pathFrom setStringValue: [job pathFrom]];
-	[pathTo setStringValue: [job pathTo]];
-	if ([scheduleCheckbox state] == NSOffState && [job scheduled]) {
-		[scheduleCheckbox setState:NSOnState];
-		[self resizeBackupWindow:scheduleCheckbox];
-	} else if ([scheduleCheckbox state] == NSOnState && ![job scheduled]) {
-		[scheduleCheckbox setState:NSOffState];
-		[self resizeBackupWindow:scheduleCheckbox];
-	}
-	if ([job scheduled]) {
-		[dayOfWeekChooser selectCellAtRow:0 column:[job dayOfWeek]];
-		[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:[job timeOfJob]]];
-	}
-	[deleteRemote setState: [job deleteChanged] ? NSOnState : NSOffState ];
-	[copyHidden setState: [job copyHidden] ? NSOnState : NSOffState ];
-	[copyExtended setState: [job copyExtended] ? NSOnState : NSOffState ];
-	[filesToIgnore setString: [[job excludeList] componentsJoinedByString:@" "]];
-	// if job doesn't match defaults, show Advanced
-	if (! ([job deleteChanged] && (![job copyHidden]) && (![job copyExtended]))) {
-		[basicOrAdvanced setSelectedSegment:1];
-		[self switchAdvancedBasicView:basicOrAdvanced];
-	}
-	[NSApp beginSheet: createJobPanel
-	   modalForWindow: mainView
-		modalDelegate: self
-	   didEndSelector: NULL
-		  contextInfo: NULL];
-	[createJobPanel orderFront:self];
-}
-
 - (IBAction)newJob:(id)sender
 {
 	NSAssert([jobsDictionary isKindOfClass:[NSMutableDictionary class]] == YES, @"jobsDictionary is not an NSMutableDictionary");
@@ -183,7 +68,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[jobList setSelectedObjects: [NSArray arrayWithObject: job]];
 	[self editSelectedJob];
 }
-
 
 // TODO: This function is getting rather convoluted and hard to read.
 - (IBAction)saveJob:(id)sender
@@ -215,18 +99,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
 	NSArray * allJobs = [jobList content];
 	NSString * errorFormat = @"You already have a job named \"%@\", not counting case or punctuation. "
-							 @"Please give your job a different name.";
+	@"Please give your job a different name.";
 	for (int i = [allJobs count] - 1; i >= 0; i--) {
 		if ([[[jobName stringValue] stringWithoutWhitespace] 
 				caseInsensitiveCompare:[[[allJobs objectAtIndex:i] jobName] stringWithoutWhitespace]] == NSOrderedSame &&
 			[allJobs objectAtIndex: i] != [self activeJob] ) {
 			[self freakoutAlertTitle:@"Name Collision" Text: 
-						  [NSString stringWithFormat: errorFormat, [[allJobs objectAtIndex:i] jobName]]];
+				[NSString stringWithFormat: errorFormat, [[allJobs objectAtIndex:i] jobName]]];
 			return;
 		}
 	}
 	/* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
-	   from defaults. */
+		from defaults. */
 	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
 		[jobsDictionary removeObjectForKey:[job jobName]];
 	}
@@ -252,19 +136,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[self dismissSheet];
 }
 
-- (void)dismissSheet {
-	[windowList reloadData];
-	[createJobPanel orderOut:self];
-	[NSApp endSheet:createJobPanel returnCode:1];
-	// returning window to default state should really go here:
-	[dayOfWeekChooser selectCellAtRow:0 column:0];
-	[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:defaultTime]];
-	if ([basicOrAdvanced selectedSegment] == 1) {
-		[basicOrAdvanced setSelectedSegment:0];
-		[self switchAdvancedBasicView:basicOrAdvanced];
-	}
-}
-
 - (IBAction)runJob:(id)sender
 {
 	[sender setEnabled:NO];
@@ -283,10 +154,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSPipe * outpipe = [NSPipe pipe];
 	[rsync setStandardOutput:outpipe];
 	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
-/*	NSPipe * inpipe = [NSPipe pipe];
+	/*	NSPipe * inpipe = [NSPipe pipe];
 	[rsync setStandardInput:inpipe];
 	NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
-*/
+	*/
 	NSData * nextChunk;
 	NSString * currentOutput;
 	[rsync launch];
@@ -298,19 +169,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		/* // SECTION REMOVED: It doesn't seem like I can actually pass a password to rsync :(
 		   // I will have to require keys.
 			
-		if ([currentOutput rangeOfString:@"Enter passphrase for key"].location != NSNotFound) {
-			[passwordRequestText setStringValue: currentOutput];
-			if ([NSApp runModalForWindow:passwordPanel] == NSRunStoppedResponse) {
-				NSString * password = [passwordEntryField stringValue];
-				smartLog(@"Password: %@", password);
-			} else {
-				// Cancel pressed, kill job...
-				[rsync terminate];
+			if ([currentOutput rangeOfString:@"Enter passphrase for key"].location != NSNotFound) {
+				[passwordRequestText setStringValue: currentOutput];
+				if ([NSApp runModalForWindow:passwordPanel] == NSRunStoppedResponse) {
+					NSString * password = [passwordEntryField stringValue];
+					smartLog(@"Password: %@", password);
+				} else {
+					// Cancel pressed, kill job...
+					[rsync terminate];
+				}
+			} else if ([currentOutput rangeOfString:@"Are you sure you want to continue connecting"].location != NSNotFound) {
+				// TODO: Does this need to be a dialog?  If we're talking security, then yes.
+				[rsyncInput writeData:[NSData dataWithBytes:"yes" length:4]];
 			}
-		} else if ([currentOutput rangeOfString:@"Are you sure you want to continue connecting"].location != NSNotFound) {
-			// TODO: Does this need to be a dialog?  If we're talking security, then yes.
-			[rsyncInput writeData:[NSData dataWithBytes:"yes" length:4]];
-		}
 		*/
 		[copyingFileName setStringValue:currentOutput];
 		// since we're hogging the run loop, need to tell progress window to update itself:
@@ -331,28 +202,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[spinner stopAnimation:self];
 	[sender setEnabled:YES];
 }
+
 - (IBAction)cancelPassword:(id)sender {
 	[NSApp abortModal];
 }
+
 - (IBAction)okayPassword:(id)sender {
 	[NSApp stopModal];
-}
-
-/** When we modify a launchd job we have to tell launchd to unload it then reload it.
-    if it's never been unloaded and unload results in an error, I don't care. 
- **/
-- (void)informLaunchd:(Job *) job {
-	NSTask *unload = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" 
-											  arguments:[NSArray arrayWithObjects: @"unload", [job pathToPlist], nil]];
-	if ([unload isRunning])
-		[unload waitUntilExit];
-	smartLog(@"donewaitingforunload");
-	NSTask *load = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl"
-											arguments:[NSArray arrayWithObjects: @"load", [job pathToPlist], nil]];
-	smartLog(@"load wait:");
-	[load waitUntilExit];
-	smartLog(@"done waiting");
-	smartLog(@"status: %d", [load terminationStatus]);
 }
 
 - (IBAction)killJob:(id)sender
@@ -392,10 +248,155 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		[self resizeForAdvancedOrBasic:-200 animate: YES];
 	}
 	else {
-	// switch to advanced:
+		// switch to advanced:
 		basicMode = NO;
 		[self resizeForAdvancedOrBasic:200 animate: YES];
 	}
+}
+
+- (IBAction)dayOfWeekPressed:(id)sender {
+	
+}
+
+- (IBAction)toggleDrawer:(id)sender {
+	[advancedDrawer toggle:sender];
+}
+
+- (IBAction)resizeBackupWindow:(id)sender {
+	NSArray * subviews = [[[optBox subviews] objectAtIndex:0] subviews];
+	if ([sender state] == NSOffState){
+		//	[self shrinkBackupWindow];
+		for (unsigned x = 0; x < [subviews count]; x++) {
+			[[subviews objectAtIndex:x] setEnabled:NO];
+		}
+		[[self activeJob] setScheduled:NO];
+	}
+	else {
+		//	[self growBackupWindow];
+		for (unsigned x = 0; x < [subviews count]; x++) {
+			[[subviews objectAtIndex:x] setEnabled:YES];
+		}
+		[[self activeJob] setScheduled:YES];
+	}
+}
+
+/*******     Functions called from within Yargcontroller or other code directly     *******
+********/
+
+- (id)init {
+	self = [super init];
+	modifying = NO;
+	defaultTime = [[NSDateComponents alloc] init];
+	[defaultTime setHour: 16];
+	[defaultTime setMinute:0];
+	sharedDefaults = [[NSUserDefaults standardUserDefaults] retain];
+	[sharedDefaults registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
+		@"/usr/bin/rsync", @"rsyncPath", @"", @"defaultExcludeList", nil]];
+	return self;
+}
+
+- (void)awakeFromNib {
+	// sharedDefaults:Jobs is a dictionary containing NameOfJob:DictOfJob pairs
+	// as spit out from Job#asSerializedDictionary and potentially stored
+	// in an NSUserDefaults plist.
+	if ([sharedDefaults dictionaryForKey:@"Jobs"] == nil) {
+		jobsDictionary = [[NSMutableDictionary dictionary] retain];
+	} else {
+		jobsDictionary = [[NSMutableDictionary dictionaryWithDictionary:[sharedDefaults dictionaryForKey:@"Jobs"]] retain];
+	}
+	NSAssert([jobsDictionary isKindOfClass:[NSMutableDictionary class]] == YES, @"jobsDictionary is not an NSMutableDictionary");
+	[sharedDefaults setObject:jobsDictionary forKey:@"Jobs"];
+	NSEnumerator *jobEnum = [jobsDictionary objectEnumerator];
+	NSDictionary *job;
+	while ((job = [jobEnum nextObject])) {
+		[jobList addObject:[Job jobFromDict:job]];
+	}
+	
+	/* Set cells in TableView to truncate at beginning instead of default end */
+	NSTextFieldCell *from = [[windowList tableColumnWithIdentifier:@"FromColumn"] dataCell];
+	NSTextFieldCell *to = [[windowList tableColumnWithIdentifier:@"ToColumn"] dataCell];
+	[from setLineBreakMode:NSLineBreakByTruncatingHead];
+	[to setLineBreakMode:NSLineBreakByTruncatingHead];
+	
+	NSRect frame = [createJobPanel frame];
+	frame.origin.x -= 100;
+	frame.size.width -= 200;
+	[createJobPanel setFrame:frame display:YES];
+	
+	NSArray * subviews = [[[optBox subviews] objectAtIndex:0] subviews];
+	for (unsigned x = 0; x < [subviews count]; x++) {
+		[[subviews objectAtIndex:x] setEnabled:NO];
+	}
+	basicMode = YES;
+	NSNotificationCenter * defaultCenter = [NSNotificationCenter defaultCenter];
+	[defaultCenter addObserver:self 
+					  selector:@selector(applicationTerminating:)
+						  name:@"NSApplicationWillTerminateNotification" 
+						object:nil];
+		
+}
+
+-(void)editSelectedJob {
+	Job * job = [self activeJob];
+	[jobName setStringValue: [job jobName]];
+	[pathFrom setStringValue: [job pathFrom]];
+	[pathTo setStringValue: [job pathTo]];
+	if ([scheduleCheckbox state] == NSOffState && [job scheduled]) {
+		[scheduleCheckbox setState:NSOnState];
+		[self resizeBackupWindow:scheduleCheckbox];
+	} else if ([scheduleCheckbox state] == NSOnState && ![job scheduled]) {
+		[scheduleCheckbox setState:NSOffState];
+		[self resizeBackupWindow:scheduleCheckbox];
+	}
+	if ([job scheduled]) {
+		[dayOfWeekChooser selectCellAtRow:0 column:[job dayOfWeek]];
+		[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:[job timeOfJob]]];
+	}
+	[deleteRemote setState: [job deleteChanged] ? NSOnState : NSOffState ];
+	[copyHidden setState: [job copyHidden] ? NSOnState : NSOffState ];
+	[copyExtended setState: [job copyExtended] ? NSOnState : NSOffState ];
+	[filesToIgnore setString: [[job excludeList] componentsJoinedByString:@" "]];
+	// if job doesn't match defaults, show Advanced
+	if (! ([job deleteChanged] && (![job copyHidden]) && (![job copyExtended]))) {
+		[basicOrAdvanced setSelectedSegment:1];
+		[self switchAdvancedBasicView:basicOrAdvanced];
+	}
+	[NSApp beginSheet: createJobPanel
+	   modalForWindow: mainView
+		modalDelegate: self
+	   didEndSelector: NULL
+		  contextInfo: NULL];
+	[createJobPanel orderFront:self];
+}
+
+- (void)dismissSheet {
+	[windowList reloadData];
+	[createJobPanel orderOut:self];
+	[NSApp endSheet:createJobPanel returnCode:1];
+	// returning window to default state should really go here:
+	[dayOfWeekChooser selectCellAtRow:0 column:0];
+	[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:defaultTime]];
+	if ([basicOrAdvanced selectedSegment] == 1) {
+		[basicOrAdvanced setSelectedSegment:0];
+		[self switchAdvancedBasicView:basicOrAdvanced];
+	}
+}
+
+/** When we modify a launchd job we have to tell launchd to unload it then reload it.
+    if it's never been unloaded and unload results in an error, I don't care. 
+ **/
+- (void)informLaunchd:(Job *) job {
+	NSTask *unload = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" 
+											  arguments:[NSArray arrayWithObjects: @"unload", [job pathToPlist], nil]];
+	if ([unload isRunning])
+		[unload waitUntilExit];
+	smartLog(@"launchd job for %@ unloaded", [job jobName]);
+	NSTask *load = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl"
+											arguments:[NSArray arrayWithObjects: @"load", [job pathToPlist], nil]];
+	smartLog(@"loading job %@ in launchd:", [job jobName]);
+	[load waitUntilExit];
+	smartLog(@"done waiting for launchd.");
+	smartLog(@"launchd temination status: %d", [load terminationStatus]);
 }
 
 - (void) resizeForAdvancedOrBasic:(int)amountToChange animate:(BOOL)bl {
@@ -403,10 +404,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	frame.origin.x -= amountToChange / 2;
 	frame.size.width += amountToChange;
 	[createJobPanel setFrame:frame display:YES animate: bl];
-}
-
-- (IBAction)dayOfWeekPressed:(id)sender {
-	
 }
 
 - (void) locateDirWithOpenPanel:(NSOpenPanel *)op forField:(NSTextField *)field
@@ -432,28 +429,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 							  NULL, 
 							  NULL,							 
 							  alertText);
-}
-
-- (IBAction)toggleDrawer:(id)sender {
-	[advancedDrawer toggle:sender];
-}
-
-- (IBAction)resizeBackupWindow:(id)sender {
-	NSArray * subviews = [[[optBox subviews] objectAtIndex:0] subviews];
-	if ([sender state] == NSOffState){
-	//	[self shrinkBackupWindow];
-		for (unsigned x = 0; x < [subviews count]; x++) {
-			[[subviews objectAtIndex:x] setEnabled:NO];
-		}
-		[[self activeJob] setScheduled:NO];
-	}
-	else {
-	//	[self growBackupWindow];
-		for (unsigned x = 0; x < [subviews count]; x++) {
-			[[subviews objectAtIndex:x] setEnabled:YES];
-		}
-		[[self activeJob] setScheduled:YES];
-	}
 }
 
 - (Job *)activeJob {
