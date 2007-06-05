@@ -133,7 +133,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	[self informLaunchd:job];
 	[jobsDictionary setObject:[job asSerializedDictionary] forKey:[job jobName]];
-	[self dismissSheet];
+	[self dismissJobEditSheet];
 }
 
 - (IBAction)runJob:(id)sender
@@ -217,7 +217,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		[self deleteJob:sender];
 	}
 	modifying = NO;
-	[self dismissSheet];
+	[self dismissJobEditSheet];
 }
 
 - (IBAction)browseFrom:(id)sender{
@@ -369,7 +369,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[createJobPanel orderFront:self];
 }
 
-- (void)dismissSheet {
+- (void)dismissJobEditSheet {
 	[windowList reloadData];
 	[createJobPanel orderOut:self];
 	[NSApp endSheet:createJobPanel returnCode:1];
@@ -380,6 +380,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		[basicOrAdvanced setSelectedSegment:0];
 		[self switchAdvancedBasicView:basicOrAdvanced];
 	}
+	[createJobPanel makeFirstResponder:jobName];
 }
 
 /** When we modify a launchd job we have to tell launchd to unload it then reload it.
