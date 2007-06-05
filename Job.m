@@ -107,6 +107,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 			[NSNumber numberWithInt:minuteOfHour], @"Minute",
 			[NSNumber numberWithInt: dayOfWeek], @"Weekday", nil] 
 				 forKey:@"StartCalendarInterval"];
+	} else {
+		[dict setObject:[NSNumber numberWithBool:YES] forKey:@"Disabled"];
 	}
 	[dict setObject:programArguments forKey:@"ProgramArguments"];
 	[dict setObject:[self rsyncPath] forKey:@"Program"];

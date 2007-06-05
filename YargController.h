@@ -74,7 +74,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)okayPassword:(id)sender;
 
 - (void)locateDirWithOpenPanel:(NSOpenPanel *)op forField:(NSTextField *)field;
-- (void)dismissSheet;
+- (void)dismissJobEditSheet;
 - (void)editSelectedJob;
 - (void)freakoutAlertTitle:(NSString *)alertTitle Text: (NSString *)alertText;
 - (void)applicationTerminating:(id)notification;
