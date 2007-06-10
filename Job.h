@@ -67,8 +67,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (void)setRsyncPath:(NSString *)path;
 - (NSMutableArray *)excludeList;
 - (void)setExcludeList:(NSArray *)list;
-- (BOOL)writeFile:(id)sender;
-- (BOOL)deleteFile:(id)sender;
+- (BOOL)writeLaunchdPlist;
+- (BOOL)deleteLaunchdPlist;
 - (BOOL)copyExtended;
 - (void)setCopyExtended:(BOOL)yn;
 - (BOOL)deleteChanged;

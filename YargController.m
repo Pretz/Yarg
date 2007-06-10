@@ -17,6 +17,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #import "YargController.h"
+#import "Job.h"
+#import "additions.h"
 
 // A few internal functions I only want to use within YargController
 @interface YargController (private)
@@ -36,7 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)deleteJob:(id)sender
 {
 	Job * job = [self activeJob];
-	if (! [job deleteFile: self]) {
+	if (! [job deleteLaunchdPlist]) {
 		NSBeginCriticalAlertSheet(@"Critical Error!" , @"Okay", 
 								  nil, 
 								  nil, 
@@ -73,13 +75,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)saveJob:(id)sender
 {
 	Job *job = [self activeJob];
-	NSCharacterSet * whiteSpaceChars = [NSCharacterSet whitespaceCharacterSet];
-	NSString * strippedJobName = 
-		[[jobName stringValue] stringByTrimmingCharactersInSet: whiteSpaceChars];
-	NSString * strippedPathTo = 
-		[[pathTo stringValue] stringByTrimmingCharactersInSet: whiteSpaceChars];
-	NSString * strippedPathFrom = 
-		[[pathFrom stringValue] stringByTrimmingCharactersInSet: whiteSpaceChars];
+	// Strip any spaces or tabs from beginning and end of jobName and paths:
+	NSString * strippedJobName = [[jobName stringValue] stringByTrimmingWhitespace];
+	NSString * strippedPathTo = [[pathTo stringValue] stringByTrimmingWhitespace];
+	NSString * strippedPathFrom = [[pathFrom stringValue] stringByTrimmingWhitespace];
+	// Check for invalid user entries:
 	if ([strippedJobName isEqualToString: @""]) {
 		[self freakoutAlertTitle:@"You need a name!" Text: @"Please give your backup job a name."];
 		return;
@@ -94,26 +94,30 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 			@"Please select a valid path.", strippedPathFrom]];
 		return;
 	}
+	// Set our job's data based on advanced check boxes
 	[job setDeleteChanged: [deleteRemote state] == NSOnState ? YES : NO];
 	[job setCopyHidden: [copyHidden state] == NSOnState ? YES : NO];
 	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
-	NSArray * allJobs = [jobList content];
+	// Make sure no other jobs have the same name (not including whitespace)
 	NSString * errorFormat = @"You already have a job named \"%@\", not counting case or punctuation. "
 	@"Please give your job a different name.";
-	for (int i = [allJobs count] - 1; i >= 0; i--) {
-		if ([[[jobName stringValue] stringWithoutWhitespace] 
-				caseInsensitiveCompare:[[[allJobs objectAtIndex:i] jobName] stringWithoutWhitespace]] == NSOrderedSame &&
-			[allJobs objectAtIndex: i] != [self activeJob] ) {
+	NSEnumerator *jobEnum = [[jobList content] objectEnumerator];
+	Job *currentJob;
+	while((currentJob = [jobEnum nextObject])) {
+		if ([[[jobName stringValue] stringWithoutSpaces] 
+				caseInsensitiveCompare:[[currentJob jobName] stringWithoutSpaces]] == NSOrderedSame &&
+			currentJob != [self activeJob]) {
 			[self freakoutAlertTitle:@"Name Collision" Text: 
-				[NSString stringWithFormat: errorFormat, [[allJobs objectAtIndex:i] jobName]]];
+				[NSString stringWithFormat: errorFormat, [currentJob jobName]]];
 			return;
 		}
 	}
 	/* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
 		from defaults. */
-	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
+	if (modifying && (![strippedJobName isEqualToString:[[job jobName] stringWithoutSpaces]])) {
 		[jobsDictionary removeObjectForKey:[job jobName]];
 	}
+	smartLog(@"new job called %@", strippedJobName);
 	[job setJobName: strippedJobName];
 	[job setPathFrom: strippedPathFrom];
 	[job setPathTo: strippedPathTo];
@@ -126,7 +130,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	modifying = NO;
 	smartLog(@"%@", [job asLaunchdPlistDictionary]);
-	if (! [job writeFile:self]) {
+	if (! [job writeLaunchdPlist]) {
 		[self freakoutAlertTitle:@"Critical Error!" 
 							Text:[NSString stringWithFormat:@"Job cannot be saved!\n Is %@ writeable?", [job pathToPlist]]];
 		return;

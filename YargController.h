@@ -20,9 +20,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #import <Cocoa/Cocoa.h>
 
-#import "Job.h"
-#import "additions.h"
-
 @interface YargController : NSObject
 {
     IBOutlet NSArrayController *jobList;

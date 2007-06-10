@@ -25,14 +25,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 @implementation NSString (additions)
-- (NSString *)stringWithoutWhitespace {
+- (NSString *)stringWithoutSpaces {
 	NSMutableString * strippedString = [NSMutableString stringWithString:@""];
+	unichar space = [@" " characterAtIndex:0];
 	for (unsigned int x = 0; x < [self length]; x++) {
-		if ([self characterAtIndex:x] != [@" " characterAtIndex:0]) {
+		if ([self characterAtIndex:x] != space) {
 			[strippedString appendFormat:@"%C", [self characterAtIndex:x]];
 		}
 	}
 	return strippedString;
+}
+- (NSString *)stringByTrimmingWhitespace {
+	return [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 @end
 

@@ -12,12 +12,38 @@
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		FA01AB810B03E577004A54F4 /* YargController.m in Sources */ = {isa = PBXBuildFile; fileRef = FA01AB800B03E577004A54F4 /* YargController.m */; };
 		FA01AB990B03EA53004A54F4 /* Job.m in Sources */ = {isa = PBXBuildFile; fileRef = FA01AB980B03EA53004A54F4 /* Job.m */; };
+		FA04290E0C176F4600803AE5 /* syncer.m in Sources */ = {isa = PBXBuildFile; fileRef = FA04289C0C15DFA200803AE5 /* syncer.m */; };
+		FA0429BC0C18956800803AE5 /* syncer in Resources */ = {isa = PBXBuildFile; fileRef = FA0429080C176EBA00803AE5 /* syncer */; };
+		FA0429E00C1A3F1F00803AE5 /* syncer in CopyFiles */ = {isa = PBXBuildFile; fileRef = FA0429080C176EBA00803AE5 /* syncer */; };
 		FACDD91F0B0D6AB9004E306D /* additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FACDD91E0B0D6AB9004E306D /* additions.m */; };
 		FACDD9E90B0D7D72004E306D /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = FACDD9E80B0D7D72004E306D /* icon.icns */; };
 		FAD841E00C0E0099001E7A83 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = FAD841DF0C0E0099001E7A83 /* LICENSE.txt */; };
 		FAD841E80C0E0220001E7A83 /* package.sh in Resources */ = {isa = PBXBuildFile; fileRef = FAD841E70C0E0220001E7A83 /* package.sh */; };
 		FAD841F40C0E0684001E7A83 /* makesourceball.sh in Resources */ = {isa = PBXBuildFile; fileRef = FAD841F30C0E0684001E7A83 /* makesourceball.sh */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FA0429BF0C1A3DC500803AE5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA0429070C176EBA00803AE5;
+			remoteInfo = syncer;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FA0429DE0C1A3F0400803AE5 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				FA0429E00C1A3F1F00803AE5 /* syncer in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
@@ -32,7 +58,10 @@
 		FA01AB7F0B03E577004A54F4 /* YargController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = YargController.h; sourceTree = "<group>"; };
 		FA01AB800B03E577004A54F4 /* YargController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = YargController.m; sourceTree = "<group>"; };
 		FA01AB970B03EA53004A54F4 /* Job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Job.h; sourceTree = "<group>"; };
-		FA01AB980B03EA53004A54F4 /* Job.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Job.m; sourceTree = "<group>"; };
+		FA01AB980B03EA53004A54F4 /* Job.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Job.m; sourceTree = "<group>"; wrapsLines = 0; };
+		FA04289B0C15DFA200803AE5 /* syncer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = syncer.h; sourceTree = "<group>"; };
+		FA04289C0C15DFA200803AE5 /* syncer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = syncer.m; sourceTree = "<group>"; };
+		FA0429080C176EBA00803AE5 /* syncer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = syncer; sourceTree = BUILT_PRODUCTS_DIR; };
 		FACDD91D0B0D6AB9004E306D /* additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = additions.h; sourceTree = "<group>"; };
 		FACDD91E0B0D6AB9004E306D /* additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = additions.m; sourceTree = "<group>"; };
 		FACDD9E80B0D7D72004E306D /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
@@ -50,12 +79,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA0429060C176EBA00803AE5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				FA01AB970B03EA53004A54F4 /* Job.h */,
+				FA01AB980B03EA53004A54F4 /* Job.m */,
+				FA04289B0C15DFA200803AE5 /* syncer.h */,
+				FA04289C0C15DFA200803AE5 /* syncer.m */,
+				FA01AB7F0B03E577004A54F4 /* YargController.h */,
+				FA01AB800B03E577004A54F4 /* YargController.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -82,6 +124,7 @@
 			isa = PBXGroup;
 			children = (
 				8D1107320486CEB800E47090 /* yarg.app */,
+				FA0429080C176EBA00803AE5 /* syncer */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -103,12 +146,10 @@
 			children = (
 				FACDD91D0B0D6AB9004E306D /* additions.h */,
 				FACDD91E0B0D6AB9004E306D /* additions.m */,
-				FA01AB970B03EA53004A54F4 /* Job.h */,
-				FA01AB980B03EA53004A54F4 /* Job.m */,
 				32CA4F630368D1EE00C91783 /* yarg_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
-				FA01AB7F0B03E577004A54F4 /* YargController.h */,
-				FA01AB800B03E577004A54F4 /* YargController.m */,
+				FAD841F30C0E0684001E7A83 /* makesourceball.sh */,
+				FAD841E70C0E0220001E7A83 /* package.sh */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -116,8 +157,6 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				FAD841F30C0E0684001E7A83 /* makesourceball.sh */,
-				FAD841E70C0E0220001E7A83 /* package.sh */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				FACDD9E80B0D7D72004E306D /* icon.icns */,
 				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
@@ -145,16 +184,34 @@
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
+				FA0429DE0C1A3F0400803AE5 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				FA0429C00C1A3DC500803AE5 /* PBXTargetDependency */,
 			);
 			name = yarg;
 			productInstallPath = "$(HOME)/Applications";
 			productName = yarg;
 			productReference = 8D1107320486CEB800E47090 /* yarg.app */;
 			productType = "com.apple.product-type.application";
+		};
+		FA0429070C176EBA00803AE5 /* syncer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA04290B0C176ED900803AE5 /* Build configuration list for PBXNativeTarget "syncer" */;
+			buildPhases = (
+				FA0429050C176EBA00803AE5 /* Sources */,
+				FA0429060C176EBA00803AE5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = syncer;
+			productName = syncer;
+			productReference = FA0429080C176EBA00803AE5 /* syncer */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -167,6 +224,7 @@
 			projectDirPath = "";
 			targets = (
 				8D1107260486CEB800E47090 /* yarg */,
+				FA0429070C176EBA00803AE5 /* syncer */,
 			);
 		};
 /* End PBXProject section */
@@ -181,6 +239,7 @@
 				FAD841E00C0E0099001E7A83 /* LICENSE.txt in Resources */,
 				FAD841E80C0E0220001E7A83 /* package.sh in Resources */,
 				FAD841F40C0E0684001E7A83 /* makesourceball.sh in Resources */,
+				FA0429BC0C18956800803AE5 /* syncer in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,7 +257,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA0429050C176EBA00803AE5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA04290E0C176F4600803AE5 /* syncer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FA0429C00C1A3DC500803AE5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA0429070C176EBA00803AE5 /* syncer */;
+			targetProxy = FA0429BF0C1A3DC500803AE5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
@@ -278,6 +353,52 @@
 			};
 			name = Release;
 		};
+		FA04290C0C176ED900803AE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = syncer;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		FA04290D0C176ED900803AE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = syncer;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -295,6 +416,15 @@
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
 				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FA04290B0C176ED900803AE5 /* Build configuration list for PBXNativeTarget "syncer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA04290C0C176ED900803AE5 /* Debug */,
+				FA04290D0C176ED900803AE5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

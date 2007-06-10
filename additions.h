@@ -25,7 +25,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <stdarg.h>
 
 @interface NSString (additions) 
-- (NSString *)stringWithoutWhitespace;
+- (NSString *)stringWithoutSpaces;
+- (NSString *)stringByTrimmingWhitespace;
 @end
 
 void smartLog(NSString *format, ...);

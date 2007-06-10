@@ -97,7 +97,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (NSDictionary *)asLaunchdPlistDictionary {
 	NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity: 4];
-	[dict setObject:[[NSString stringWithFormat:@"%@%@", @"com.yarg.", jobName] stringWithoutWhitespace] 
+	[dict setObject:[[NSString stringWithFormat:@"%@%@", @"com.yarg.", jobName] stringWithoutSpaces] 
 			 forKey:@"Label"];
 	NSMutableArray *programArguments = [NSMutableArray arrayWithObject:[self rsyncPath]];
 	[programArguments addObjectsFromArray:[self rsyncArguments]];
@@ -122,7 +122,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
  */
 - (NSDictionary *)asSerializedDictionary {
 	NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity: 4];
-	[dict setObject:[[NSString stringWithFormat:@"%@%@", @"com.yarg.", jobName] stringWithoutWhitespace] 
+	[dict setObject:[NSString stringWithFormat:@"com.yarg.%@", [jobName stringWithoutSpaces]]
 			 forKey:@"Label"];
 	[dict setObject:[NSNumber numberWithBool:copyExtended] forKey:@"copyExtended"];
 	[dict setObject:[NSNumber numberWithBool:copyHidden] forKey:@"copyHidden"];
@@ -143,8 +143,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	// dictionaryWithCapacity returns a pre-autoreleased object that I can just return, right?
 	return dict;
 }
-
-- (BOOL)writeFile:(id)sender {
+/*! Writes a launchd plist file according to launchd.plist(5) into the appropriate LaunchAgents dir
+ *  for the current user. Returns YES on success and NO on failure.
+ */
+- (BOOL)writeLaunchdPlist {
 	if (runAsRoot) {
 		smartLog(@"Root backup jobs incomplete");
 	} else {
@@ -158,22 +160,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 				return NO;
 			}
 		}
-		NSString *filename = [NSString stringWithFormat:@"com.yarg.%@.plist", [jobName stringWithoutWhitespace]];
+		NSString *filename = [NSString stringWithFormat:@"com.yarg.%@.plist", [jobName stringWithoutSpaces]];
 		// savePath = ~/Library/LaunchAgents/com.yarg.JOBNAME.plist
 		NSString *savePath = [pathToLaunchAgents stringByAppendingPathComponent:filename];
 		// if jobname changed after file save, delete old file!
 		if ([self pathToPlist] != nil && [savePath compare:[self pathToPlist]] != NSOrderedSame){
-			if (! [self deleteFile:sender]) // can't delete old file!?
+			if (! [self deleteLaunchdPlist]) // can't delete old file!?
 				return NO;
 		}
-		[[self asLaunchdPlistDictionary] writeToFile:savePath atomically:NO];
+		if (! [[self asLaunchdPlistDictionary] writeToFile:savePath atomically:YES]) {
+			return NO;
+		}
 		// remember where the job is saved now
 		[self setPathToPlist:savePath];
 	}
 	return YES;
 }
-
-- (BOOL)deleteFile:(id)sender {
+/*! Deletes the launchd plist associated with this job if it exists.
+ *  Returns YES on success and NO if the file does not exist or cannot be deleted.
+ */
+- (BOOL)deleteLaunchdPlist {
 	NSLog(@"deleting job %@ which is at %@", [self jobName], [self pathToPlist]);
 	if ([self pathToPlist] != nil && ![[NSFileManager defaultManager] removeFileAtPath:[self pathToPlist] handler:nil]) {
 		return NO;
