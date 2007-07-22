@@ -38,6 +38,20 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (NSString *)stringByTrimmingWhitespace {
 	return [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
+- (NSArray *)componentsSeperatedByCharacterSet:(NSCharacterSet *)aSet {
+	NSString * string = self;
+	NSMutableArray * anArray = [NSMutableArray array];
+	NSRange range = [string rangeOfCharacterFromSet:aSet];
+	while (range.location != NSNotFound) {
+		[anArray addObject:[string substringToIndex:range.location]];
+		string = [string substringFromIndex: range.location+range.length];
+		range = [string rangeOfCharacterFromSet:aSet];
+	}
+	if ([string length] > 0) {
+		[anArray addObject:string];
+	}
+	return anArray;
+}
 @end
 
 

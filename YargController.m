@@ -20,13 +20,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #import "Job.h"
 #import "additions.h"
 
-// A few internal functions I only want to use within YargController
+// Internal functions I only want to use within YargController
 @interface YargController (private)
 - (void) shrinkBackupWindow;
 - (void) growBackupWindow;
 - (Job *) activeJob;
 - (void) resizeForAdvancedOrBasic:(int)amountToChange animate:(BOOL)bl; 
 - (void) informLaunchd:(Job *) job;
+- (void)runJobInNewThread:(id)sender;
 @end
 
 
@@ -52,6 +53,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	[jobsDictionary removeObjectForKey:[job jobName]];
 	[jobList removeObject:job];
+	[self synchronizeSettingsToDisk:nil];
 }
 
 - (IBAction)modifyJob:(id)sender
@@ -104,9 +106,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSEnumerator *jobEnum = [[jobList content] objectEnumerator];
 	Job *currentJob;
 	while((currentJob = [jobEnum nextObject])) {
-		if ([[[jobName stringValue] stringWithoutSpaces] 
-				caseInsensitiveCompare:[[currentJob jobName] stringWithoutSpaces]] == NSOrderedSame &&
-			currentJob != [self activeJob]) {
+		// I think this shows where ObjC's syntax gets nasty; is there a nicer way to write this?
+		if ([[[jobName stringValue] stringWithoutSpaces] caseInsensitiveCompare:
+			[[currentJob jobName] stringWithoutSpaces]] == NSOrderedSame && currentJob != [self activeJob]) {
 			[self freakoutAlertTitle:@"Name Collision" Text: 
 				[NSString stringWithFormat: errorFormat, [currentJob jobName]]];
 			return;
@@ -114,14 +116,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	/* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
 		from defaults. */
-	if (modifying && (![strippedJobName isEqualToString:[[job jobName] stringWithoutSpaces]])) {
+	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
 		[jobsDictionary removeObjectForKey:[job jobName]];
 	}
 	smartLog(@"new job called %@", strippedJobName);
 	[job setJobName: strippedJobName];
 	[job setPathFrom: strippedPathFrom];
 	[job setPathTo: strippedPathTo];
-	[job setExcludeList:[[filesToIgnore string] componentsSeparatedByString:@" "]];
+	//[job setExcludeList:[[filesToIgnore string] componentsSeparatedByString:@" "]];
+	[job setExcludeList:[[filesToIgnore string] componentsSeperatedByCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
 	if ([job scheduled]) {
 		[job setDayOfWeek:[dayOfWeekChooser selectedColumn]];
 		NSCalendarDate *date = [[timeInput dateValue] dateWithCalendarFormat:nil timeZone:nil];
@@ -137,34 +140,44 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	[self informLaunchd:job];
 	[jobsDictionary setObject:[job asSerializedDictionary] forKey:[job jobName]];
+	[self synchronizeSettingsToDisk:nil];
 	[self dismissJobEditSheet];
 }
 
 - (IBAction)runJob:(id)sender
 {
+	
+	[NSThread detachNewThreadSelector:@selector(runJobInNewThread:) toTarget:self withObject:sender];
+	
+}
+
+- (void)runJobInNewThread:(id)sender  
+{
 	[sender setEnabled:NO];
-	Job * job = [self activeJob];
-	NSTask *rsync = [[NSTask alloc] init];
-	[rsync setLaunchPath:[job rsyncPath]];
-	// TODO: exclude patterns
-	[rsync setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
-	smartLog(@"rsync args: %@", [job rsyncArguments]);
 	[NSApp beginSheet: backupRunningPanel
 	   modalForWindow: mainView
 		modalDelegate: self
 	   didEndSelector: NULL
 		  contextInfo: NULL];
 	[spinner startAnimation:self];
+	[backupRunningPanel makeKeyAndOrderFront:self];
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	Job * job = [self activeJob];
+	rsyncTask = [[NSTask alloc] init];
+	[rsyncTask setLaunchPath:[job rsyncPath]];
+	// TODO: exclude patterns
+	[rsyncTask setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
+	smartLog(@"rsync args: %@", [job rsyncArguments]);
 	NSPipe * outpipe = [NSPipe pipe];
-	[rsync setStandardOutput:outpipe];
+	[rsyncTask setStandardOutput:outpipe];
 	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
 	/*	NSPipe * inpipe = [NSPipe pipe];
-	[rsync setStandardInput:inpipe];
+	[rsyncTask setStandardInput:inpipe];
 	NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
 	*/
 	NSData * nextChunk;
 	NSString * currentOutput;
-	[rsync launch];
+	[rsyncTask launch];
 	smartLog(@"rsync launched");
 	while ([nextChunk = [rsyncOutput availableData] length] != 0) {
 		currentOutput = [[NSString alloc] initWithData:nextChunk encoding: NSUTF8StringEncoding];
@@ -180,31 +193,38 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 					smartLog(@"Password: %@", password);
 				} else {
 					// Cancel pressed, kill job...
-					[rsync terminate];
+					[rsyncTask terminate];
 				}
 			} else if ([currentOutput rangeOfString:@"Are you sure you want to continue connecting"].location != NSNotFound) {
 				// TODO: Does this need to be a dialog?  If we're talking security, then yes.
 				[rsyncInput writeData:[NSData dataWithBytes:"yes" length:4]];
 			}
 		*/
-		[copyingFileName setStringValue:currentOutput];
-		// since we're hogging the run loop, need to tell progress window to update itself:
-		[backupRunningPanel display];
-		[currentOutput release];
+		// Only display filename, not full path.  Is this wanted?
+		[copyingFileName setStringValue:[[currentOutput pathComponents] lastObject]];
 	}
-	[rsync waitUntilExit];
+	[rsyncTask waitUntilExit];
 	[backupRunningPanel orderOut:self];
 	// Finder can't seem to tell that files have changed unless you tell it:
 	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[job pathTo]];
 	[NSApp endSheet:backupRunningPanel returnCode:1];
-	int stat = [rsync terminationStatus];
+	int stat = [rsyncTask terminationStatus];
+	// TODO: Need user-visible error handling!
 	if (stat == 0)
 		smartLog(@"Rsync did okay");
+	else if (stat == 20) // rsync recieved SIGUSR1 or SIGINT
+		smartLog(@"rsync was cancelled by the user");
 	else
 		smartLog(@"rsync crapped out");
-	[rsync release];
+	[rsyncTask release];
 	[spinner stopAnimation:self];
+	[pool release];
 	[sender setEnabled:YES];
+}
+
+- (IBAction)stopCurrentBackupJob:(id)sender
+{
+	[rsyncTask terminate];
 }
 
 - (IBAction)cancelPassword:(id)sender {
@@ -334,7 +354,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	basicMode = YES;
 	NSNotificationCenter * defaultCenter = [NSNotificationCenter defaultCenter];
 	[defaultCenter addObserver:self 
-					  selector:@selector(applicationTerminating:)
+					  selector:@selector(applicationWillTerminate:)
 						  name:@"NSApplicationWillTerminateNotification" 
 						object:nil];
 		
@@ -398,7 +418,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	smartLog(@"launchd job for %@ unloaded", [job jobName]);
 	NSTask *load = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl"
 											arguments:[NSArray arrayWithObjects: @"load", [job pathToPlist], nil]];
-	smartLog(@"loading job %@ in launchd:", [job jobName]);
+	smartLog(@"loading job %@ at %@ in launchd:", [job jobName], [job pathToPlist]);
 	[load waitUntilExit];
 	smartLog(@"done waiting for launchd.");
 	smartLog(@"launchd temination status: %d", [load terminationStatus]);
@@ -447,7 +467,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[super dealloc];
 }
 
-- (void)applicationTerminating:(id)notification {
+- (void)applicationWillTerminate:(id)sender {
+	[self synchronizeSettingsToDisk:sender];
+	if ([rsyncTask isRunning]) {
+		[rsyncTask terminate];
+	}
+}
+
+- (void)synchronizeSettingsToDisk:(id)notification {
 	[sharedDefaults setObject:jobsDictionary forKey:@"Jobs"];
 	[sharedDefaults synchronize];
 }

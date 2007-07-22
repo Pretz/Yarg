@@ -290,14 +290,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (NSArray *)rsyncArguments {
 	NSMutableArray * rsyncArgs = [NSMutableArray arrayWithCapacity: 8];
-	[rsyncArgs addObject:@"-a"];
+	[rsyncArgs addObject:@"-ax"]; // add -P when I can parse it into a progress bar
 #ifdef IS_DEVELOPMENT
 	[rsyncArgs addObject:@"-vv"];
 	[rsyncArgs addObject:@"--rsh=ssh -vv"];
-#else
-	[rsyncArgs addObject:@"-q"];
 #endif
-	[rsyncArgs addObject:@"--delete-excluded"];
 	
 	if (copyExtended) {
 		[rsyncArgs addObject:@"-E"];
@@ -307,6 +304,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	if (deleteChanged) {
 		[rsyncArgs addObject:@"--delete"];
+		[rsyncArgs addObject:@"--delete-excluded"];
 	}
 	NSArray *thingsToExclude;
 	if ([excludeList count] > 0 && (! [[excludeList objectAtIndex:0] isEqual:@""])) {

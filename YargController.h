@@ -54,6 +54,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	bool basicMode;
 	NSMutableDictionary *jobsDictionary;
 	NSDateComponents *defaultTime;
+	NSTask *rsyncTask;
 }
 - (IBAction)deleteJob:(id)sender;
 - (IBAction)modifyJob:(id)sender;
@@ -69,10 +70,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)toggleDrawer:(id)sender;
 - (IBAction)cancelPassword:(id)sender;
 - (IBAction)okayPassword:(id)sender;
+- (IBAction)stopCurrentBackupJob:(id)sender;
 
 - (void)locateDirWithOpenPanel:(NSOpenPanel *)op forField:(NSTextField *)field;
 - (void)dismissJobEditSheet;
 - (void)editSelectedJob;
 - (void)freakoutAlertTitle:(NSString *)alertTitle Text: (NSString *)alertText;
-- (void)applicationTerminating:(id)notification;
+- (void)synchronizeSettingsToDisk:(id)notification;
+- (void)applicationWillTerminate:(id)sender;
 @end
