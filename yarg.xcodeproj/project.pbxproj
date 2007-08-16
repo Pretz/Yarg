@@ -13,13 +13,9 @@
 		FA01AB810B03E577004A54F4 /* YargController.m in Sources */ = {isa = PBXBuildFile; fileRef = FA01AB800B03E577004A54F4 /* YargController.m */; };
 		FA01AB990B03EA53004A54F4 /* Job.m in Sources */ = {isa = PBXBuildFile; fileRef = FA01AB980B03EA53004A54F4 /* Job.m */; };
 		FA04290E0C176F4600803AE5 /* syncer.m in Sources */ = {isa = PBXBuildFile; fileRef = FA04289C0C15DFA200803AE5 /* syncer.m */; };
-		FA0429BC0C18956800803AE5 /* syncer in Resources */ = {isa = PBXBuildFile; fileRef = FA0429080C176EBA00803AE5 /* syncer */; };
 		FA0429E00C1A3F1F00803AE5 /* syncer in CopyFiles */ = {isa = PBXBuildFile; fileRef = FA0429080C176EBA00803AE5 /* syncer */; };
 		FACDD91F0B0D6AB9004E306D /* additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FACDD91E0B0D6AB9004E306D /* additions.m */; };
 		FACDD9E90B0D7D72004E306D /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = FACDD9E80B0D7D72004E306D /* icon.icns */; };
-		FAD841E00C0E0099001E7A83 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = FAD841DF0C0E0099001E7A83 /* LICENSE.txt */; };
-		FAD841E80C0E0220001E7A83 /* package.sh in Resources */ = {isa = PBXBuildFile; fileRef = FAD841E70C0E0220001E7A83 /* package.sh */; };
-		FAD841F40C0E0684001E7A83 /* makesourceball.sh in Resources */ = {isa = PBXBuildFile; fileRef = FAD841F30C0E0684001E7A83 /* makesourceball.sh */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -236,10 +232,6 @@
 			files = (
 				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
 				FACDD9E90B0D7D72004E306D /* icon.icns in Resources */,
-				FAD841E00C0E0099001E7A83 /* LICENSE.txt in Resources */,
-				FAD841E80C0E0220001E7A83 /* package.sh in Resources */,
-				FAD841F40C0E0684001E7A83 /* makesourceball.sh in Resources */,
-				FA0429BC0C18956800803AE5 /* syncer in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

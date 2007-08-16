@@ -9,3 +9,4 @@
 
 NSArray * rsyncArgumentsFromDict(NSDictionary *dict);
 BOOL runThisJob(NSDictionary *dict);
+pid_t sessionID;

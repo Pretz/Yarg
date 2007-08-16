@@ -19,6 +19,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #import "YargController.h"
 #import "Job.h"
 #import "additions.h"
+#include <sys/types.h>
+#include <unistd.h>
 
 // Internal functions I only want to use within YargController
 @interface YargController (private)
@@ -146,13 +148,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (IBAction)runJob:(id)sender
 {
-	
-	[NSThread detachNewThreadSelector:@selector(runJobInNewThread:) toTarget:self withObject:sender];
-	
-}
-
-- (void)runJobInNewThread:(id)sender  
-{
 	[sender setEnabled:NO];
 	[NSApp beginSheet: backupRunningPanel
 	   modalForWindow: mainView
@@ -161,28 +156,60 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		  contextInfo: NULL];
 	[spinner startAnimation:self];
 	[backupRunningPanel makeKeyAndOrderFront:self];
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	Job * job = [self activeJob];
 	rsyncTask = [[NSTask alloc] init];
 	[rsyncTask setLaunchPath:[job rsyncPath]];
-	// TODO: exclude patterns
 	[rsyncTask setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
 	smartLog(@"rsync args: %@", [job rsyncArguments]);
+	/* Must make sure that rsync runs in the same group as this thread, so that when this thread dies,
+		i.e. via force quit or something, rsync will be killed as well.
+		from http://www.cocoadev.com/index.pl?NSTaskTermination */
+	// create a new group session with us as the leader, or failing that get our current group session
+	processGroup = setsid();
+	smartLog(@"try one group is %d", processGroup);
+	if (processGroup == -1) {
+		processGroup = getpgrp();
+		smartLog(@"try two group is %d", processGroup);
+	}
 	NSPipe * outpipe = [NSPipe pipe];
 	[rsyncTask setStandardOutput:outpipe];
 	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
+	[rsyncTask launch];
+	NSArray * arguments = [NSArray arrayWithObjects:sender, rsyncOutput, nil];
+	smartLog(@"starting session id of rsync is %d", getpgid([rsyncTask processIdentifier]));
+	// place into same group, this ensures that when yarg terminates rsync will terminate
+/*	if ((getpgid([rsyncTask processIdentifier]) != processGroup) && (setpgid([rsyncTask processIdentifier], processGroup) == -1)) {
+		NSLog(@"unable to put rsync into same group as self, error #: %d", errno);
+		[rsyncTask terminate];
+		[rsyncTask waitUntilExit];
+	} else { */
+		// Is it bad practice to call a method in this same object in a new thread, or just dangerous
+		// because of data synchronicity?
+		[NSThread detachNewThreadSelector:@selector(runJobInNewThread:) toTarget:self withObject:arguments];	
+//	}
+	
+	// is it better to have a notification receiver recieve when that thread exits rather than
+	// having the thread clean up stuff started in this method?
+}
+
+- (void)runJobInNewThread:(id)arguments  
+{
+	// Creating the autorelease pool MUST be first thing in this method:
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	[arguments retain];
+	id runButton = [arguments objectAtIndex:0];
+	NSFileHandle * rsyncOutput = [arguments objectAtIndex:1];
 	/*	NSPipe * inpipe = [NSPipe pipe];
 	[rsyncTask setStandardInput:inpipe];
 	NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
 	*/
 	NSData * nextChunk;
 	NSString * currentOutput;
-	[rsyncTask launch];
-	smartLog(@"rsync launched");
-	while ([nextChunk = [rsyncOutput availableData] length] != 0) {
-		currentOutput = [[NSString alloc] initWithData:nextChunk encoding: NSUTF8StringEncoding];
+	// Is it better (and possible) to do this loop asynchronously with NSFileHandle#readInBackgroundAndNotify ?
+	// Additionally, should this loop have its own pool for each loop to conserve memory, or is that overkill?
+	while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
+		currentOutput = [[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding];
 		smartLog(@"ll: %@", currentOutput);
-		
 		/* // SECTION REMOVED: It doesn't seem like I can actually pass a password to rsync :(
 		   // I will have to require keys.
 			
@@ -202,11 +229,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		*/
 		// Only display filename, not full path.  Is this wanted?
 		[copyingFileName setStringValue:[[currentOutput pathComponents] lastObject]];
+		[currentOutput release];
 	}
+	[rsyncOutput closeFile];
 	[rsyncTask waitUntilExit];
 	[backupRunningPanel orderOut:self];
 	// Finder can't seem to tell that files have changed unless you tell it:
-	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[job pathTo]];
+	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[[self activeJob] pathTo]];
 	[NSApp endSheet:backupRunningPanel returnCode:1];
 	int stat = [rsyncTask terminationStatus];
 	// TODO: Need user-visible error handling!
@@ -215,11 +244,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	else if (stat == 20) // rsync recieved SIGUSR1 or SIGINT
 		smartLog(@"rsync was cancelled by the user");
 	else
-		smartLog(@"rsync crapped out");
+		smartLog(@"rsync crapped out; exit status %d", stat);
 	[rsyncTask release];
+	rsyncTask = nil;
 	[spinner stopAnimation:self];
+	[arguments release];
 	[pool release];
-	[sender setEnabled:YES];
+	[runButton setEnabled:YES];
 }
 
 - (IBAction)stopCurrentBackupJob:(id)sender
@@ -469,7 +500,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (void)applicationWillTerminate:(id)sender {
 	[self synchronizeSettingsToDisk:sender];
-	if ([rsyncTask isRunning]) {
+	if (rsyncTask && [rsyncTask isRunning]) {
 		[rsyncTask terminate];
 	}
 }

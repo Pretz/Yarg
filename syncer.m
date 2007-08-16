@@ -7,6 +7,7 @@
 
 #import "syncer.h"
 #include <stdio.h>
+#include <unistd.h>
 #import <Foundation/Foundation.h>
 
 int main(int argc, char *argv[])
@@ -14,6 +15,14 @@ int main(int argc, char *argv[])
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s JOBNAME\n", argv[0]);
 		return 10;
+	}
+	// Make this the master of a new process group
+	sessionID = setsid();
+	NSLog(@"new session with id %d", sessionID);
+	if (sessionID == -1) {
+		sessionID = getsid(0);
+		NSLog(@"setsid() failed, sessionID is %d", sessionID);
+	//	return 10;
 	}
 	// Evidently creating this pool lets all of Cocoa know where to find it
 	NSAutoreleasePool *thePool = [[NSAutoreleasePool alloc] init];
@@ -29,6 +38,9 @@ int main(int argc, char *argv[])
 		return 11;
 	}
 	NSLog(@"running rsync %@", rsyncArgumentsFromDict(jobDict));
+	if (! runThisJob(jobDict)) {
+		NSLog(@"This should handle an error somehow");
+	}
 	NSLog(@"this job is %@", jobDict);
 	// Release autorelease pool
 	[thePool release];
@@ -40,8 +52,9 @@ BOOL runThisJob(NSDictionary * dict) {
 	// TODO: Only store "Program" if set for individual job, otherwise
 	// use global program rsync path.
 	[rsync setLaunchPath:[dict objectForKey:@"Program"]];
-	[rsync setArguments:[rsyncArgumentsFromDict(dict) arrayByAddingObject:@"--no-detach"];
+	[rsync setArguments:[rsyncArgumentsFromDict(dict) arrayByAddingObject:@"--no-detach"]];
 	[rsync launch];
+	NSLog(@"rsync session ID is %d", getsid([rsync processIdentifier]));
 	[rsync waitUntilExit];
 	if ([rsync terminationStatus] != 0) {
 		NSLog(@"running job %@ failed", [dict objectForKey:@"jobName"]);
