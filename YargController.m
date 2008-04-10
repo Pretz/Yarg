@@ -24,16 +24,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 // Internal functions I only want to use within YargController
 @interface YargController (private)
-- (void) shrinkBackupWindow;
-- (void) growBackupWindow;
-- (Job *) activeJob;
-- (void) resizeForAdvancedOrBasic:(int)amountToChange animate:(BOOL)bl; 
-- (void) informLaunchd:(Job *) job;
+- (void)shrinkBackupWindow;
+- (void)growBackupWindow;
+- (Job *)activeJob;
+- (void)resizeForAdvancedOrBasic:(int)amountToChange animate:(BOOL)bl; 
+- (void)informLaunchd:(Job *) job;
 - (void)runJobInNewThread:(id)sender;
+- (void)setTabView:(NSTabView *)tabView Enabled:(BOOL)yesno;
 @end
 
 
 @implementation YargController 
+
+#pragma mark IBAction GUI Functions
 
 /*******    IBAction functions called from GUI user interaction    ********
 ********/
@@ -121,18 +124,35 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
 		[jobsDictionary removeObjectForKey:[job jobName]];
 	}
-	smartLog(@"new job called %@", strippedJobName);
+	smartLog(@"saving job called %@", strippedJobName);
 	[job setJobName: strippedJobName];
 	[job setPathFrom: strippedPathFrom];
 	[job setPathTo: strippedPathTo];
 	//[job setExcludeList:[[filesToIgnore string] componentsSeparatedByString:@" "]];
 	[job setExcludeList:[[filesToIgnore string] componentsSeperatedByCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
-	if ([job scheduled]) {
-		[job setDayOfWeek:[dayOfWeekChooser selectedColumn]];
-		NSCalendarDate *date = [[timeInput dateValue] dateWithCalendarFormat:nil timeZone:nil];
-		[job setTimeOfJob:[[NSCalendar currentCalendar] components:NSHourCalendarUnit | NSMinuteCalendarUnit
-														  fromDate:date]];
-	}
+	if ([scheduleCheckbox state] == NSOnState) {
+        int selectedTab = [optBox indexOfTabViewItem:[optBox selectedTabViewItem]];
+        [job setScheduleStyle: selectedTab == 0 ? ScheduleMonthly : ScheduleWeekly];
+        NSCalendarDate *date;
+        if (selectedTab == 0) {
+            date = [[timeMonthInput dateValue] dateWithCalendarFormat:nil timeZone:nil];
+            [job setDaysToRun:[NSArray arrayWithObject:[NSNumber numberWithInt:[dayOfMonthPopup indexOfSelectedItem] + 1]]];
+        } else if (selectedTab == 1) {
+            NSEnumerator * selectedCells = [[dayOfWeekChooser cells] objectEnumerator];
+            NSMutableArray * daysToRun = [NSMutableArray arrayWithCapacity:7];
+            NSButtonCell *nextCell;
+            while((nextCell = [selectedCells nextObject])) {
+                if ([nextCell state] == NSOnState)
+                    [daysToRun addObject:[NSNumber numberWithInt:[nextCell tag]]];
+            }
+            [job setDaysToRun:daysToRun];
+            date = [[timeWeekInput dateValue] dateWithCalendarFormat:nil timeZone:nil];
+        }
+        [job setTimeOfJob:[[NSCalendar currentCalendar] components:NSHourCalendarUnit | NSMinuteCalendarUnit
+                                                          fromDate:date]];
+	} else {
+        [job setScheduleStyle:ScheduleNone];
+    }
 	modifying = NO;
 	smartLog(@"%@", [job asLaunchdPlistDictionary]);
 	if (! [job writeLaunchdPlist]) {
@@ -210,23 +230,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
 		currentOutput = [[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding];
 		smartLog(@"ll: %@", currentOutput);
-		/* // SECTION REMOVED: It doesn't seem like I can actually pass a password to rsync :(
-		   // I will have to require keys.
-			
-			if ([currentOutput rangeOfString:@"Enter passphrase for key"].location != NSNotFound) {
-				[passwordRequestText setStringValue: currentOutput];
-				if ([NSApp runModalForWindow:passwordPanel] == NSRunStoppedResponse) {
-					NSString * password = [passwordEntryField stringValue];
-					smartLog(@"Password: %@", password);
-				} else {
-					// Cancel pressed, kill job...
-					[rsyncTask terminate];
-				}
-			} else if ([currentOutput rangeOfString:@"Are you sure you want to continue connecting"].location != NSNotFound) {
-				// TODO: Does this need to be a dialog?  If we're talking security, then yes.
-				[rsyncInput writeData:[NSData dataWithBytes:"yes" length:4]];
-			}
-		*/
 		// Only display filename, not full path.  Is this wanted?
 		[copyingFileName setStringValue:[[currentOutput pathComponents] lastObject]];
 		[currentOutput release];
@@ -250,6 +253,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[spinner stopAnimation:self];
 	[arguments release];
 	[pool release];
+	// TODO: This doesn't seem to be thread-safe.  Send a notification to the main thread instead.
 	[runButton setEnabled:YES];
 }
 
@@ -317,26 +321,47 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[advancedDrawer toggle:sender];
 }
 
+
 - (IBAction)resizeBackupWindow:(id)sender {
-	NSArray * subviews = [[[optBox subviews] objectAtIndex:0] subviews];
+	
 	if ([sender state] == NSOffState){
+/*        [optBox setEnabled:NO];
 		//	[self shrinkBackupWindow];
 		for (unsigned x = 0; x < [subviews count]; x++) {
 			[[subviews objectAtIndex:x] setEnabled:NO];
 		}
 		[[self activeJob] setScheduled:NO];
+ */
+        [self setTabView:optBox Enabled:NO];
 	}
 	else {
-		//	[self growBackupWindow];
+		/*	[self growBackupWindow];
+        [optBox setEnabled:YES];
 		for (unsigned x = 0; x < [subviews count]; x++) {
 			[[subviews objectAtIndex:x] setEnabled:YES];
 		}
-		[[self activeJob] setScheduled:YES];
+		[[self activeJob] setScheduled:YES]; */
+        [self setTabView:optBox Enabled:YES];
 	}
+}
+
+- (void)setTabView:(NSTabView *)tabView Enabled:(BOOL)enable {
+    NSEnumerator * tabs = [[tabView tabViewItems] objectEnumerator];
+    id nextView;
+    NSTabViewItem *tabViewItem;
+    // Enumerate through all the items in the TabView and disable them if possible.
+    while ((tabViewItem = [tabs nextObject])) {
+        NSEnumerator * views = [[[tabViewItem view] subviews] objectEnumerator];
+        while ((nextView = [views nextObject])) {
+            [nextView setEnabled: enable ? YES : NO];
+        }
+    }
 }
 
 /*******     Functions called from within Yargcontroller or other code directly     *******
 ********/
+
+#pragma mark Internal Functions
 
 - (id)init {
 	self = [super init];
@@ -372,7 +397,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSTextFieldCell *to = [[windowList tableColumnWithIdentifier:@"ToColumn"] dataCell];
 	[from setLineBreakMode:NSLineBreakByTruncatingHead];
 	[to setLineBreakMode:NSLineBreakByTruncatingHead];
-	
+    
+    NSString *suffix = nil;
+	/* Initialize the day-of-month picker */
+    for (int i = 4; i < 32; i++) {
+        suffix = suffixForNum(i);
+        [dayOfMonthPopup addItemWithTitle:[NSString stringWithFormat:@"%d%@", i, suffix]];
+    }
+    
 	NSRect frame = [createJobPanel frame];
 	frame.origin.x -= 100;
 	frame.size.width -= 200;
@@ -388,7 +420,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 					  selector:@selector(applicationWillTerminate:)
 						  name:@"NSApplicationWillTerminateNotification" 
 						object:nil];
-		
 }
 
 -(void)editSelectedJob {
@@ -396,17 +427,22 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[jobName setStringValue: [job jobName]];
 	[pathFrom setStringValue: [job pathFrom]];
 	[pathTo setStringValue: [job pathTo]];
-	if ([scheduleCheckbox state] == NSOffState && [job scheduled]) {
-		[scheduleCheckbox setState:NSOnState];
-		[self resizeBackupWindow:scheduleCheckbox];
-	} else if ([scheduleCheckbox state] == NSOnState && ![job scheduled]) {
-		[scheduleCheckbox setState:NSOffState];
-		[self resizeBackupWindow:scheduleCheckbox];
-	}
-	if ([job scheduled]) {
-		[dayOfWeekChooser selectCellAtRow:0 column:[job dayOfWeek]];
-		[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:[job timeOfJob]]];
-	}
+    [dayOfWeekChooser deselectAllCells];
+    [scheduleCheckbox setState: [job scheduleStyle] == ScheduleNone ? NSOffState : NSOnState];
+    [self resizeBackupWindow:scheduleCheckbox];
+    if ([job scheduleStyle] == ScheduleWeekly) {
+        [optBox selectTabViewItemAtIndex:1];
+        NSEnumerator * enumer = [[job daysToRun] objectEnumerator];
+        NSNumber *nextDay;
+        while ((nextDay = [enumer nextObject])) {
+            [dayOfWeekChooser selectCellWithTag:[nextDay intValue]];
+        }
+        [timeWeekInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:[job timeOfJob]]];
+    } else if ([job scheduleStyle] == ScheduleMonthly) {
+        [optBox selectTabViewItemAtIndex:0];
+        [dayOfMonthPopup selectItemAtIndex:[[[job daysToRun] objectAtIndex:0] intValue]-1];
+        [timeMonthInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:[job timeOfJob]]];
+    }
 	[deleteRemote setState: [job deleteChanged] ? NSOnState : NSOffState ];
 	[copyHidden setState: [job copyHidden] ? NSOnState : NSOffState ];
 	[copyExtended setState: [job copyExtended] ? NSOnState : NSOffState ];
@@ -430,7 +466,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[NSApp endSheet:createJobPanel returnCode:1];
 	// returning window to default state should really go here:
 	[dayOfWeekChooser selectCellAtRow:0 column:0];
-	[timeInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:defaultTime]];
+	[timeWeekInput setDateValue:[[NSCalendar currentCalendar] dateFromComponents:defaultTime]];
 	if ([basicOrAdvanced selectedSegment] == 1) {
 		[basicOrAdvanced setSelectedSegment:0];
 		[self switchAdvancedBasicView:basicOrAdvanced];

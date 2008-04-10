@@ -31,3 +31,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 @end
 
 void smartLog(NSString *format, ...);
+NSString *suffixForNum(int num);
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4
+typedef int NSInteger;
+#endif

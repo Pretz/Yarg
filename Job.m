@@ -51,13 +51,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 									   pathTo:[dictionary objectForKey:@"pathTo"]
 									  jobName:[dictionary objectForKey:@"jobName"]];
 	[job setRsyncPath: [dictionary objectForKey:@"Program"]];
-	NSDictionary *dateInfo;
-	if ((dateInfo = [dictionary objectForKey:@"StartCalendarInterval"]) != nil) {
-		[job setScheduled:YES];
-		job->hourOfDay = [[dateInfo objectForKey:@"Hour"] intValue];
-		job->minuteOfHour = [[dateInfo objectForKey:@"Minute"] intValue];
-		[job setDayOfWeek:[[dateInfo objectForKey:@"Weekday"] intValue]];
-	}
+    [job setScheduleStyle:[[dictionary objectForKey:@"scheduleStyle"] intValue]];
+    if ([job scheduleStyle] != ScheduleNone) {
+        job->hourOfDay = [[dictionary objectForKey:@"Hour"] intValue];
+        job->minuteOfHour = [[dictionary objectForKey:@"Minute"] intValue];
+        [job setDaysToRun:[dictionary objectForKey:@"daysToRun"]];
+    }
 	[job setCopyHidden: [[dictionary objectForKey:@"copyHidden"] boolValue]];
 	[job setDeleteChanged: [[dictionary objectForKey:@"deleteChanged"] boolValue]];
 	[job setCopyExtended: [[dictionary objectForKey:@"copyExtended"] boolValue]];
@@ -79,9 +78,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		runAsRoot = NO;
 		copyHidden = NO;
 		deleteChanged = YES;
-		scheduled = NO;
+		scheduleStyle = ScheduleNone;
 		pathToPlist = nil;
 		excludeList = [[NSMutableArray arrayWithCapacity:1] retain];
+        daysToRun = nil;
 	}
 	return self;
 }
@@ -101,12 +101,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 			 forKey:@"Label"];
 	NSMutableArray *programArguments = [NSMutableArray arrayWithObject:[self rsyncPath]];
 	[programArguments addObjectsFromArray:[self rsyncArguments]];
-	if (scheduled) {
-		[dict setObject:[NSDictionary dictionaryWithObjectsAndKeys:
-			[NSNumber numberWithInt:hourOfDay], @"Hour",
-			[NSNumber numberWithInt:minuteOfHour], @"Minute",
-			[NSNumber numberWithInt: dayOfWeek], @"Weekday", nil] 
-				 forKey:@"StartCalendarInterval"];
+	if ([self scheduleStyle] != ScheduleNone) {
+        NSEnumerator *days = [daysToRun objectEnumerator];
+        NSMutableArray *calendarIntervals = [NSMutableArray arrayWithCapacity:7];
+        NSNumber * day;
+        NSString * dayKey = [self scheduleStyle] == ScheduleWeekly ? @"Weekday" : @"Day";
+        while ((day = [days nextObject])) {
+                [calendarIntervals addObject:
+                 [NSDictionary dictionaryWithObjectsAndKeys:
+                  [NSNumber numberWithInt:hourOfDay], @"Hour",
+                  [NSNumber numberWithInt:minuteOfHour], @"Minute",
+                  day, dayKey, nil]];   
+        }
+        [dict setObject:calendarIntervals forKey:@"StartCalendarInterval"];
 	} else {
 		[dict setObject:[NSNumber numberWithBool:YES] forKey:@"Disabled"];
 	}
@@ -121,7 +128,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
      this job, and can be re-created into an identical job with jobFromDict:
  */
 - (NSDictionary *)asSerializedDictionary {
-	NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity: 4];
+	NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:14];
 	[dict setObject:[NSString stringWithFormat:@"com.yarg.%@", [jobName stringWithoutSpaces]]
 			 forKey:@"Label"];
 	[dict setObject:[NSNumber numberWithBool:copyExtended] forKey:@"copyExtended"];
@@ -132,15 +139,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[dict setObject:pathTo forKey:@"pathTo"];
 	[dict setObject:pathToPlist forKey:@"pathToPlist"];
 	[dict setObject:jobName forKey:@"jobName"];
-	if (scheduled) {
-		[dict setObject:[NSDictionary dictionaryWithObjectsAndKeys:
-			[NSNumber numberWithInt:hourOfDay], @"Hour",
-			[NSNumber numberWithInt:minuteOfHour], @"Minute",
-			[NSNumber numberWithInt: dayOfWeek], @"Weekday", nil] 
-				 forKey:@"StartCalendarInterval"];
-	}
-	[dict setObject:[self rsyncPath] forKey:@"Program"];
-	// dictionaryWithCapacity returns a pre-autoreleased object that I can just return, right?
+    [dict setObject:[NSNumber numberWithInt:scheduleStyle] forKey:@"scheduleStyle"];
+    [dict setObject:[self rsyncPath] forKey:@"Program"];
+    [dict setObject:[self daysToRun] forKey:@"daysToRun"];
+    [dict setObject:[NSNumber numberWithInt:hourOfDay] forKey:@"Hour"];
+    [dict setObject:[NSNumber numberWithInt:minuteOfHour] forKey:@"Minute"];
 	return dict;
 }
 /*! Writes a launchd plist file according to launchd.plist(5) into the appropriate LaunchAgents dir
@@ -213,12 +216,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	pathToPlist = [path copy];
 }
 
-- (unsigned char)dayOfWeek {
-	return dayOfWeek;
+- (NSArray *)daysToRun {
+	return [[daysToRun copy] autorelease];
 }
 
-- (void)setDayOfWeek:(unsigned char)day {
-	dayOfWeek = day;
+- (void)setDaysToRun:(NSArray *)days {
+    [daysToRun release];
+	daysToRun = [days copy];
 }
 
 - (NSDateComponents *)timeOfJob{
@@ -253,11 +257,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	jobName = [name copy];
 }
 
-- (BOOL)scheduled {
-	return scheduled;
+- (int)scheduleStyle {
+	return scheduleStyle;
 }
-- (void)setScheduled:(BOOL)yesno {
-	scheduled = yesno;
+- (void)setScheduleStyle:(int)sched {
+	scheduleStyle = sched;
 }
 
 - (BOOL)copyExtended {

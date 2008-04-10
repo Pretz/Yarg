@@ -32,7 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSString *rsyncPath;
 	NSString *pathToPlist;
 	// For launchd:
-	int dayOfWeek;
+    NSArray *daysToRun;
 	int hourOfDay;
 	int minuteOfHour;
 	/* rsync orguments for user options: */
@@ -40,7 +40,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	BOOL runAsRoot;
 	BOOL copyHidden;
 	BOOL deleteChanged;
-	BOOL scheduled;
+	int scheduleStyle;
 	NSMutableArray *excludeList;
 
 }
@@ -53,14 +53,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (NSString *)pathTo;
 - (NSString *)jobName;
 - (NSString *)rsyncPath;
-- (BOOL)scheduled;
+- (int)scheduleStyle;
 - (NSString *)pathToPlist;
 - (void)setPathToPlist:(NSString *)path;
-- (void)setScheduled:(BOOL)yesno;
-- (unsigned char)dayOfWeek;
+- (void)setScheduleStyle:(int)sched;
+- (NSArray *)daysToRun;
 - (NSDateComponents *)timeOfJob;
 - (void)setTimeOfJob:(NSDateComponents *)dateComponents;
-- (void)setDayOfWeek:(unsigned char)day;
+- (void)setDaysToRun:(NSArray *)days;
 - (void)setPathFrom:(NSString *)path;
 - (void)setPathTo:(NSString *)path;
 - (void)setJobName:(NSString *)name;
@@ -79,3 +79,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (NSDictionary *)asLaunchdPlistDictionary;
 - (NSDictionary *)asSerializedDictionary;
 @end
+
+typedef enum _YGScheduleStyle {
+    ScheduleNone = 0,
+    ScheduleWeekly = 1,
+    ScheduleMonthly = 2
+} YGScheduleStyle;

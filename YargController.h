@@ -22,31 +22,48 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 @interface YargController : NSObject
 {
+    /**** EXTERNAL OBJECTS ****/
     IBOutlet NSArrayController *jobList;
-	IBOutlet NSTableView *windowList;
-	IBOutlet NSWindow *createJobPanel;
+    
+    /**** WINDOWS ****/
+    IBOutlet NSWindow *createJobPanel;
 	IBOutlet NSWindow *mainView;
-	IBOutlet NSTextField *jobName;
+    IBOutlet NSWindow *passwordPanel;
+    IBOutlet NSWindow *backupRunningPanel;
+    
+    /**** MAIN WINDOW ****/
+    IBOutlet NSTableView *windowList;
+    
+    /**** NEW JOB WINDOW ****/
+    IBOutlet NSTextField *jobName;
 	IBOutlet NSTextField *pathFrom;
 	IBOutlet NSTextField *pathTo;
-	IBOutlet NSView *optBox;
-	IBOutlet NSTextField *runningBackupName;
-	IBOutlet NSTextField *copyingFileName;
-	IBOutlet NSWindow *backupRunningPanel;
-	IBOutlet NSProgressIndicator *spinner;
-	IBOutlet NSButton *scheduleCheckbox;
+    IBOutlet NSSegmentedControl *basicOrAdvanced;
+    /** date picker **/
+	IBOutlet NSTabView *optBox;
+    IBOutlet NSButton *scheduleCheckbox;
 	IBOutlet NSMatrix *dayOfWeekChooser;
-	IBOutlet NSDatePicker *timeInput;
-	IBOutlet NSPopUpButton *backupChooser;
-	IBOutlet NSButton *deleteRemote;
+	IBOutlet NSDatePicker *timeWeekInput;
+    IBOutlet NSDatePicker *timeMonthInput;
+    IBOutlet NSPopUpButton *dayOfMonthPopup;
+    /** advanced controls **/
+    IBOutlet NSButton *deleteRemote;
 	IBOutlet NSButton *copyHidden;
 	IBOutlet NSButton *copyExtended;
-	IBOutlet NSSegmentedControl *basicOrAdvanced;
 	IBOutlet NSTextView *filesToIgnore;
-	IBOutlet NSDrawer *advancedDrawer;
-	IBOutlet NSWindow *passwordPanel;
+    
+    /**** RSYNC PROGRESS PANEL ****/
+    IBOutlet NSTextField *runningBackupName;
+	IBOutlet NSTextField *copyingFileName;
+	IBOutlet NSProgressIndicator *spinner;
+    
+    /**** PASSWORD WINDOW ****/
 	IBOutlet NSTextField *passwordRequestText;
 	IBOutlet NSTextField *passwordEntryField;
+    
+    /**** UNCONNECTED ??? ****/
+	IBOutlet NSPopUpButton *backupChooser;
+	IBOutlet NSDrawer *advancedDrawer;
 	
 	@private
 	NSUserDefaults *sharedDefaults;
