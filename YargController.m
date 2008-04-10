@@ -288,6 +288,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (IBAction)browseTo:(id)sender {
 	NSOpenPanel *op = [NSOpenPanel openPanel];
+    [op setCanCreateDirectories:YES];
 	[op setTitle: @"Directory to copy to"];
 	[mainView makeFirstResponder: pathTo];
 	[self locateDirWithOpenPanel:op forField: pathTo];	
