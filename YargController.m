@@ -416,11 +416,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		[[subviews objectAtIndex:x] setEnabled:NO];
 	}
 	basicMode = YES;
+    runningRsync = NO;
 	NSNotificationCenter * defaultCenter = [NSNotificationCenter defaultCenter];
 	[defaultCenter addObserver:self 
 					  selector:@selector(applicationWillTerminate:)
 						  name:@"NSApplicationWillTerminateNotification" 
 						object:nil];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if ([menuItem action] == @selector(newJob:) && 
+        ([backupRunningPanel isVisible] || [createJobPanel isVisible])) {
+        return NO;
+    }
+    if ([menuItem action] == @selector(stopCurrentBackupJob:) && ![backupRunningPanel isVisible]) {
+        return NO;
+    }
+    return YES;
 }
 
 -(void)editSelectedJob {
