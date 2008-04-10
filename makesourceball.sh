@@ -9,6 +9,6 @@
 # run this script in the root project directory to make a source code tarball
 xcodebuild -configuration Debug clean
 xcodebuild -configuration Release clean
-tar -vczf yargsource.tgz --exclude "*.DS_Store" --exclude "build/Release/*" \
+tar -vczf yargsource.tgz --exclude "*.DS_Store" --exclude "._*" --exclude "build/Release/*" \
  --exclude "build/Debug/*" --exclude "website/*.dmg" --exclude "website/*.tgz" \
- --exclude yargsource.tgz --exclude "./*.dmg" .
+ --exclude yargsource.tgz --exclude ".svn" --exclude "./*.dmg" .
