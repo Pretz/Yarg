@@ -191,11 +191,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		processGroup = getpgrp();
 		smartLog(@"try two group is %d", processGroup);
 	}
-	NSPipe * outpipe = [NSPipe pipe];
-	[rsyncTask setStandardOutput:outpipe];
-	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
-	[rsyncTask launch];
-	NSArray * arguments = [NSArray arrayWithObjects:sender, rsyncOutput, nil];
+	NSArray * arguments = [NSArray arrayWithObjects:sender, nil];
 	smartLog(@"starting session id of rsync is %d", getpgid([rsyncTask processIdentifier]));
 	// place into same group, this ensures that when yarg terminates rsync will terminate
 /*	if ((getpgid([rsyncTask processIdentifier]) != processGroup) && (setpgid([rsyncTask processIdentifier], processGroup) == -1)) {
@@ -217,23 +213,31 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	// Creating the autorelease pool MUST be first thing in this method:
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	[arguments retain];
+    NSPipe * outpipe = [NSPipe pipe];
+	[rsyncTask setStandardOutput:outpipe];
+	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
+    // Keeping this tentatively if I can use it to kill rsync when force quit
+    /*
+    NSPipe * inpipe = [NSPipe pipe];
+    [rsyncTask setStandardInput:inpipe];
+    NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
+     */
+	[rsyncTask launch];
 	id runButton = [arguments objectAtIndex:0];
-	NSFileHandle * rsyncOutput = [arguments objectAtIndex:1];
-	/*	NSPipe * inpipe = [NSPipe pipe];
-	[rsyncTask setStandardInput:inpipe];
-	NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
-	*/
 	NSData * nextChunk;
 	NSString * currentOutput;
+    smartLog(@"about to start rsync loop");
 	// Is it better (and possible) to do this loop asynchronously with NSFileHandle#readInBackgroundAndNotify ?
 	// Additionally, should this loop have its own pool for each loop to conserve memory, or is that overkill?
 	while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
 		currentOutput = [[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding];
-		smartLog(@"ll: %@", currentOutput);
+		smartLog(@"rsync: %@", currentOutput);
 		// Only display filename, not full path.  Is this wanted?
 		[copyingFileName setStringValue:[[currentOutput pathComponents] lastObject]];
+        [copyingFileName setNeedsDisplay];
 		[currentOutput release];
 	}
+    smartLog(@"Finished with rsync loop");
 	[rsyncOutput closeFile];
 	[rsyncTask waitUntilExit];
 	[backupRunningPanel orderOut:self];

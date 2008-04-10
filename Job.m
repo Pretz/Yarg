@@ -296,9 +296,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 - (NSArray *)rsyncArguments {
 	NSMutableArray * rsyncArgs = [NSMutableArray arrayWithCapacity: 8];
-	[rsyncArgs addObject:@"-ax"]; // add -P when I can parse it into a progress bar
+	[rsyncArgs addObject:@"-axv"]; // add -P when I can parse it into a progress bar
 #ifdef IS_DEVELOPMENT
-	[rsyncArgs addObject:@"-vv"];
+    [rsyncArgs addObject:@"-v"];
 	[rsyncArgs addObject:@"--rsh=ssh -vv"];
 #endif
 	
