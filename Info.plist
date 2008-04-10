@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFile</key>
-	<string>icon</string>
+	<string>iconv3</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.pretz.yarg</string>
 	<key>CFBundleInfoDictionaryVersion</key>

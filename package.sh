@@ -9,6 +9,7 @@
 # to be run from the root directory containing the xcodeproj file
 
 xcodebuild -configuration Release clean build
+rm build/Release/syncer
 cp LICENSE.txt build/Release/
 cp README.rtf build/Release/
 rm yarg.dmg
