@@ -141,9 +141,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[dict setObject:jobName forKey:@"jobName"];
     [dict setObject:[NSNumber numberWithInt:scheduleStyle] forKey:@"scheduleStyle"];
     [dict setObject:[self rsyncPath] forKey:@"Program"];
-    [dict setObject:[self daysToRun] forKey:@"daysToRun"];
-    [dict setObject:[NSNumber numberWithInt:hourOfDay] forKey:@"Hour"];
-    [dict setObject:[NSNumber numberWithInt:minuteOfHour] forKey:@"Minute"];
+    if ([self scheduleStyle] != ScheduleNone) {
+        [dict setObject:[self daysToRun] forKey:@"daysToRun"];
+        [dict setObject:[NSNumber numberWithInt:hourOfDay] forKey:@"Hour"];
+        [dict setObject:[NSNumber numberWithInt:minuteOfHour] forKey:@"Minute"];
+    }
 	return dict;
 }
 /*! Writes a launchd plist file according to launchd.plist(5) into the appropriate LaunchAgents dir

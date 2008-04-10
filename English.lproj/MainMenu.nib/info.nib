@@ -7,14 +7,10 @@
 	<key>IBLastKnownRelativeProjectPath</key>
 	<string>../../yarg.xcodeproj</string>
 	<key>IBOldestOS</key>
-	<integer>4</integer>
+	<integer>5</integer>
 	<key>IBOpenObjects</key>
 	<array>
-		<integer>581</integer>
-		<integer>21</integer>
-		<integer>342</integer>
-		<integer>496</integer>
-		<integer>592</integer>
+		<integer>2</integer>
 	</array>
 	<key>IBSystem Version</key>
 	<string>9C7010</string>
