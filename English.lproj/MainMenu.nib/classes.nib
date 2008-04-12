@@ -76,6 +76,10 @@
 				<string>NSMatrix</string>
 				<key>deleteRemote</key>
 				<string>NSButton</string>
+				<key>fileProgress</key>
+				<string>NSProgressIndicator</string>
+				<key>filenamePrompt</key>
+				<string>NSTextField</string>
 				<key>filesToIgnore</key>
 				<string>NSTextView</string>
 				<key>jobList</key>

@@ -55,7 +55,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     /**** RSYNC PROGRESS PANEL ****/
     IBOutlet NSTextField *runningBackupName;
 	IBOutlet NSTextField *copyingFileName;
+    IBOutlet NSTextField *filenamePrompt;
 	IBOutlet NSProgressIndicator *spinner;
+    IBOutlet NSProgressIndicator *fileProgress;
     
     /**** PASSWORD WINDOW ****/
 	IBOutlet NSTextField *passwordRequestText;
@@ -73,6 +75,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSDateComponents *defaultTime;
 	NSTask *rsyncTask;
 	pid_t processGroup;
+    BOOL isBuildingFileList;
 }
 - (IBAction)deleteJob:(id)sender;
 - (IBAction)modifyJob:(id)sender;

@@ -38,7 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (NSString *)stringByTrimmingWhitespace {
 	return [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
-- (NSArray *)componentsSeperatedByCharacterSet:(NSCharacterSet *)aSet {
+- (NSArray *)componentsSeparatedByCharacterSet:(NSCharacterSet *)aSet {
 	NSString * string = self;
 	NSMutableArray * anArray = [NSMutableArray array];
 	NSRange range = [string rangeOfCharacterFromSet:aSet];

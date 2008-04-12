@@ -31,6 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (void)informLaunchd:(Job *) job;
 - (void)runJobInNewThread:(id)sender;
 - (void)setTabView:(NSTabView *)tabView Enabled:(BOOL)yesno;
+- (void)setProgressForOutput:(NSString *)line;
 @end
 
 
@@ -129,7 +130,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[job setPathFrom: strippedPathFrom];
 	[job setPathTo: strippedPathTo];
 	//[job setExcludeList:[[filesToIgnore string] componentsSeparatedByString:@" "]];
-	[job setExcludeList:[[filesToIgnore string] componentsSeperatedByCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+	[job setExcludeList:[[filesToIgnore string] componentsSeparatedByCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
 	if ([scheduleCheckbox state] == NSOnState) {
         int selectedTab = [optBox indexOfTabViewItem:[optBox selectedTabViewItem]];
         [job setScheduleStyle: selectedTab == 0 ? ScheduleMonthly : ScheduleWeekly];
@@ -169,13 +170,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)runJob:(id)sender
 {
 	[sender setEnabled:NO];
-	[NSApp beginSheet: backupRunningPanel
+	[spinner startAnimation:self];
+    [spinner setUsesThreadedAnimation:YES];
+    [fileProgress setUsesThreadedAnimation:YES];
+    [spinner setIndeterminate:YES];
+    [spinner startAnimation:self];
+    [NSApp beginSheet: backupRunningPanel
 	   modalForWindow: mainView
 		modalDelegate: self
 	   didEndSelector: NULL
 		  contextInfo: NULL];
-	[spinner startAnimation:self];
 	[backupRunningPanel makeKeyAndOrderFront:self];
+    [filenamePrompt setStringValue:@""];
+    [copyingFileName setStringValue:@""];
 	Job * job = [self activeJob];
 	rsyncTask = [[NSTask alloc] init];
 	[rsyncTask setLaunchPath:[job rsyncPath]];
@@ -226,16 +233,20 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	id runButton = [arguments objectAtIndex:0];
 	NSData * nextChunk;
 	NSString * currentOutput;
+    isBuildingFileList = YES;
     smartLog(@"about to start rsync loop");
 	// Is it better (and possible) to do this loop asynchronously with NSFileHandle#readInBackgroundAndNotify ?
 	// Additionally, should this loop have its own pool for each loop to conserve memory, or is that overkill?
 	while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
-		currentOutput = [[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding];
-		smartLog(@"rsync: %@", currentOutput);
-		// Only display filename, not full path.  Is this wanted?
-		[copyingFileName setStringValue:[[currentOutput pathComponents] lastObject]];
-        [copyingFileName setNeedsDisplay];
-		[currentOutput release];
+		currentOutput = [[[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding] autorelease];
+//		smartLog(@"rsync: %@", currentOutput);
+        NSCharacterSet * newLineSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n\v\f"];
+        NSArray *lines = [currentOutput componentsSeparatedByCharacterSet:newLineSet];
+        NSEnumerator * lineEnum = [lines objectEnumerator];
+        NSString * line;
+        while ((line = [lineEnum nextObject])) {
+            [self setProgressForOutput:line];
+        }
 	}
     smartLog(@"Finished with rsync loop");
 	[rsyncOutput closeFile];
@@ -255,6 +266,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[rsyncTask release];
 	rsyncTask = nil;
 	[spinner stopAnimation:self];
+    [fileProgress setIndeterminate:YES];
+    [fileProgress stopAnimation:self];
 	[arguments release];
 	[pool release];
 	// TODO: This doesn't seem to be thread-safe.  Send a notification to the main thread instead.
@@ -507,6 +520,58 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	smartLog(@"launchd temination status: %d", [load terminationStatus]);
 }
 
+// TODO: This should check rsync version somehow and not run if it's not the right version.
+- (void)setProgressForOutput:(NSString *)line {
+    if ([line length] == 0) {
+        return;
+    }
+    // Only display filename, not full path.  Is this wanted?
+    smartLog(@"rsync line: %@", line);
+    if ([line characterAtIndex:0] == ' ' && isBuildingFileList) {
+        NSArray * bits = [line componentsSeparatedByString:@" "];
+        NSString * message = [NSString stringWithFormat:@"Checking existing files: %@ files checked", 
+                              [bits objectAtIndex:1]];
+        [filenamePrompt setStringValue:message];
+    } else if ([line characterAtIndex:0] == ' ') {
+        NSScanner * scanner = [NSScanner scannerWithString:line];
+        [scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
+        int number;
+        int filePercent;
+        float percent;
+        // amount transferred
+        [scanner scanInt:&number];
+        // percentage of file transferred
+        [scanner scanInt:&filePercent];
+        if ([line rangeOfString:@"("].location == NSNotFound) {
+            [fileProgress setDoubleValue:filePercent];
+        } else {
+            // speed of transfer
+            [scanner scanFloat:&percent];
+            // three parts of a time
+            [scanner scanInt:&number];[scanner scanInt:&number];[scanner scanInt:&number];
+            // Number's index
+            [scanner scanInt:&number];
+            // Total percentage transferred
+            [scanner scanFloat:&percent];
+            [spinner setDoubleValue:percent];
+            [fileProgress setDoubleValue:100.0];
+        }
+    } else if (isBuildingFileList) {
+        if ([line rangeOfString:@"files to consider"].location != NSNotFound) {
+            isBuildingFileList = NO;
+//            [filenamePrompt setStringValue:@"Done checking local files."];
+            [filenamePrompt setStringValue:@"Current file:"];
+            [spinner setIndeterminate:NO];
+            [fileProgress setIndeterminate:NO];
+            //                    [fileProgress startAnimation:self];
+        } else {
+            [filenamePrompt setStringValue:@"Checking existing files:"];
+        }
+    } else {
+        [copyingFileName setStringValue:[[line pathComponents] lastObject]];
+    }
+}
+
 - (void) resizeForAdvancedOrBasic:(int)amountToChange animate:(BOOL)bl {
 	NSRect frame = [createJobPanel frame];
 	frame.origin.x -= amountToChange / 2;
@@ -520,7 +585,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[op setCanChooseFiles:NO];
 	[op setCanChooseDirectories:YES];
 	[op setAllowsMultipleSelection:NO];
-	int result = [op runModalForTypes:nil];
+	int result = [op runModalForDirectory:[field stringValue] file:nil types:nil];
 	if (result != NSOKButton)
 		return;
 	[field setStringValue: [[op filenames] objectAtIndex: 0]];

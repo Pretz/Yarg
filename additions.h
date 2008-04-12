@@ -27,7 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 @interface NSString (additions) 
 - (NSString *)stringWithoutSpaces;
 - (NSString *)stringByTrimmingWhitespace;
-- (NSArray *)componentsSeperatedByCharacterSet:(NSCharacterSet *)aSet;
+- (NSArray *)componentsSeparatedByCharacterSet:(NSCharacterSet *)aSet;
 @end
 
 void smartLog(NSString *format, ...);
