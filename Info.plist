@@ -21,7 +21,7 @@
 	<key>CFBundleVersion</key>
 	<string>004</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2 alpha</string>
+	<string>0.3 pre-beta</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSHumanReadableCopyright</key>
