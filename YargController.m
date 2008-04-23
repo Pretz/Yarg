@@ -106,6 +106,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[job setDeleteChanged: [deleteRemote state] == NSOnState ? YES : NO];
 	[job setCopyHidden: [copyHidden state] == NSOnState ? YES : NO];
 	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
+    [job setRunAsRoot: [runAsRootCheckbox state] == NSOnState ? YES : NO];
 	// Make sure no other jobs have the same name (not including whitespace)
 	NSString * errorFormat = @"You already have a job named \"%@\", not counting case or punctuation. "
 	@"Please give your job a different name.";
@@ -184,13 +185,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     [filenamePrompt setStringValue:@""];
     [copyingFileName setStringValue:@""];
 	Job * job = [self activeJob];
-	rsyncTask = [[NSTask alloc] init];
-	[rsyncTask setLaunchPath:[job rsyncPath]];
-	[rsyncTask setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
-	smartLog(@"rsync args: %@", [job rsyncArguments]);
+    if (! [job runAsRoot]) {
+        rsyncTask = [[NSTask alloc] init];
+        [rsyncTask setLaunchPath:[job rsyncPath]];
+        [rsyncTask setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
+        smartLog(@"rsync args: %@", [job rsyncArguments]);
+    }
+    NSArray * arguments = [NSArray arrayWithObjects:sender, nil];
+    [NSThread detachNewThreadSelector:@selector(runJobInNewThread:) toTarget:self withObject:arguments];	
+    
 	/* Must make sure that rsync runs in the same group as this thread, so that when this thread dies,
 		i.e. via force quit or something, rsync will be killed as well.
-		from http://www.cocoadev.com/index.pl?NSTaskTermination */
+		from http://www.cocoadev.com/index.pl?NSTaskTermination
 	// create a new group session with us as the leader, or failing that get our current group session
 	processGroup = setsid();
 	smartLog(@"try one group is %d", processGroup);
@@ -198,17 +204,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		processGroup = getpgrp();
 		smartLog(@"try two group is %d", processGroup);
 	}
-	NSArray * arguments = [NSArray arrayWithObjects:sender, nil];
 	smartLog(@"starting session id of rsync is %d", getpgid([rsyncTask processIdentifier]));
 	// place into same group, this ensures that when yarg terminates rsync will terminate
-/*	if ((getpgid([rsyncTask processIdentifier]) != processGroup) && (setpgid([rsyncTask processIdentifier], processGroup) == -1)) {
+	if ((getpgid([rsyncTask processIdentifier]) != processGroup) && (setpgid([rsyncTask processIdentifier], processGroup) == -1)) {
 		NSLog(@"unable to put rsync into same group as self, error #: %d", errno);
 		[rsyncTask terminate];
 		[rsyncTask waitUntilExit];
 	} else { */
-		// Is it bad practice to call a method in this same object in a new thread, or just dangerous
-		// because of data synchronicity?
-		[NSThread detachNewThreadSelector:@selector(runJobInNewThread:) toTarget:self withObject:arguments];	
+    // Is it bad practice to call a method in this same object in a new thread, or just dangerous
+    // because of data synchronicity?
 //	}
 	
 	// is it better to have a notification receiver recieve when that thread exits rather than
@@ -220,16 +224,62 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	// Creating the autorelease pool MUST be first thing in this method:
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	[arguments retain];
-    NSPipe * outpipe = [NSPipe pipe];
-	[rsyncTask setStandardOutput:outpipe];
-	NSFileHandle * rsyncOutput = [outpipe fileHandleForReading];
-    // Keeping this tentatively if I can use it to kill rsync when force quit
-    /*
-    NSPipe * inpipe = [NSPipe pipe];
-    [rsyncTask setStandardInput:inpipe];
-    NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
-     */
-	[rsyncTask launch];
+    NSFileHandle * rsyncOutput;
+    AuthorizationRef authRef;
+    FILE * rsyncPipe = NULL;
+    OSStatus stat;
+    if ([[self activeJob] runAsRoot]) {
+        AuthorizationFlags flags;
+        flags = kAuthorizationFlagDefaults;
+        stat = AuthorizationCreate (NULL, kAuthorizationEmptyEnvironment, flags, &authRef);
+        if (stat == errAuthorizationDenied || stat == errAuthorizationCanceled) {
+            NSLog(@"Error authenticating");
+            return;
+        } else
+            NSLog(@"AuthorizationCreate returned: %d", stat);
+        AuthorizationItem anAuthItem = {kAuthorizationRightExecute, 0, NULL, 0};
+        AuthorizationRights execRights = {1, &anAuthItem};
+        flags = kAuthorizationFlagDefaults | kAuthorizationFlagInteractionAllowed | 
+        kAuthorizationFlagPreAuthorize |  
+        kAuthorizationFlagExtendRights;
+        stat = AuthorizationCopyRights(authRef, &execRights, NULL, flags, NULL);
+        if (stat != errAuthorizationSuccess) {
+            NSLog(@"Acquire auth rights failed: %d", stat);
+        }
+        // Construct rsync aguments in C-land
+        const char *path = [[[self activeJob] rsyncPath] UTF8String];
+        int numArgs = [[[self activeJob] rsyncArguments] count];
+        char *args[numArgs+1];
+        for (int i = 0; i < numArgs; i++) {
+            args[i] = [[[[self activeJob] rsyncArguments] objectAtIndex:i] UTF8String];
+        }
+        args[numArgs] = NULL;
+        NSLog(@"rsync args:");
+        for (int i = 0; i < numArgs; i++)
+            NSLog(@"\t%s", args[i]);
+        stat = AuthorizationExecuteWithPrivileges(authRef, path, 
+                                                  kAuthorizationFlagDefaults, args, &rsyncPipe);
+        if (stat == errAuthorizationSuccess) {
+            rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:fileno(rsyncPipe)] autorelease];
+        } else {
+            NSLog(@"Authorization Execute failure: %d", stat);
+            return;
+        }
+        
+        
+        
+    } else {
+        NSPipe * outpipe = [NSPipe pipe];
+        [rsyncTask setStandardOutput:outpipe];
+        rsyncOutput = [outpipe fileHandleForReading];
+        // Keeping this tentatively if I can use it to kill rsync when force quit
+        /*
+         NSPipe * inpipe = [NSPipe pipe];
+         [rsyncTask setStandardInput:inpipe];
+         NSFileHandle *rsyncInput = [inpipe fileHandleForWriting]; 
+         */
+        [rsyncTask launch];
+    }
 	id runButton = [arguments objectAtIndex:0];
 	NSData * nextChunk;
 	NSString * currentOutput;
@@ -249,13 +299,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
         }
 	}
     smartLog(@"Finished with rsync loop");
-	[rsyncOutput closeFile];
-	[rsyncTask waitUntilExit];
+    [rsyncOutput closeFile];
+    if ([[self activeJob] runAsRoot]) {
+        AuthorizationFree(authRef, kAuthorizationFlagDefaults);
+        fclose(rsyncPipe);
+    } else {
+        [rsyncTask waitUntilExit];
+    }
 	[backupRunningPanel orderOut:self];
 	// Finder can't seem to tell that files have changed unless you tell it:
 	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[[self activeJob] pathTo]];
 	[NSApp endSheet:backupRunningPanel returnCode:1];
-	int stat = [rsyncTask terminationStatus];
+	stat = [rsyncTask terminationStatus];
 	// TODO: Need user-visible error handling!
 	if (stat == 0)
 		smartLog(@"Rsync did okay");
@@ -475,6 +530,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[deleteRemote setState: [job deleteChanged] ? NSOnState : NSOffState ];
 	[copyHidden setState: [job copyHidden] ? NSOnState : NSOffState ];
 	[copyExtended setState: [job copyExtended] ? NSOnState : NSOffState ];
+    [runAsRootCheckbox setState: [job runAsRoot] ? NSOnState : NSOffState ];
 	[filesToIgnore setString: [[job excludeList] componentsJoinedByString:@" "]];
 	// if job doesn't match defaults, show Advanced
 	if (! ([job deleteChanged] && (![job copyHidden]) && (![job copyExtended]))) {
