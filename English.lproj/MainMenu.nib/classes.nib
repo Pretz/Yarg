@@ -100,6 +100,8 @@
 				<string>NSTextField</string>
 				<key>pathTo</key>
 				<string>NSTextField</string>
+				<key>runAsRootCheckbox</key>
+				<string>NSButton</string>
 				<key>runningBackupName</key>
 				<string>NSTextField</string>
 				<key>scheduleCheckbox</key>

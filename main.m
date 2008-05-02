@@ -23,7 +23,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #import <Cocoa/Cocoa.h>
 
+#import "Common.h"
+
+AuthorizationRef gAuth;
+
 int main(int argc, char *argv[])
 {
+    
+    // Create the AuthorizationRef that we'll use through this application.
+    (void) AuthorizationCreate(NULL, NULL, kAuthorizationFlagDefaults, &gAuth);
+    
+    // For each of our commands, check to see if a right specification 
+    // exists and, if not, create it. 
+    BASSetDefaultRules(
+                       gAuth, 
+                       kYargCommandSet, 
+                       CFBundleGetIdentifier(CFBundleGetMainBundle()), 
+                       NULL
+                       );
+    
     return NSApplicationMain(argc,  (const char **) argv);
 }

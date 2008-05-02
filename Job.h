@@ -75,6 +75,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (void)setDeleteChanged:(BOOL)yn;
 - (BOOL)copyHidden;
 - (void)setCopyHidden:(BOOL)yn;
+- (BOOL)runAsRoot;
+- (void)setRunAsRoot:(BOOL)yn;
 - (NSArray *)rsyncArguments;
 - (NSDictionary *)asLaunchdPlistDictionary;
 - (NSDictionary *)asSerializedDictionary;

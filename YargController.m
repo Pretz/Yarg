@@ -16,11 +16,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #import "YargController.h"
 #import "Job.h"
 #import "additions.h"
-#include <sys/types.h>
-#include <unistd.h>
+
+#import "Common.h"
+
+extern AuthorizationRef gAuth;
 
 // Internal functions I only want to use within YargController
 @interface YargController (private)
@@ -225,48 +230,78 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	[arguments retain];
     NSFileHandle * rsyncOutput;
-    AuthorizationRef authRef;
-    FILE * rsyncPipe = NULL;
-    OSStatus stat;
+    OSStatus commandErr;
+    int rsyncOutDescriptor;
     if ([[self activeJob] runAsRoot]) {
-        AuthorizationFlags flags;
-        flags = kAuthorizationFlagDefaults;
-        stat = AuthorizationCreate (NULL, kAuthorizationEmptyEnvironment, flags, &authRef);
-        if (stat == errAuthorizationDenied || stat == errAuthorizationCanceled) {
-            NSLog(@"Error authenticating");
-            return;
-        } else
-            NSLog(@"AuthorizationCreate returned: %d", stat);
-        AuthorizationItem anAuthItem = {kAuthorizationRightExecute, 0, NULL, 0};
-        AuthorizationRights execRights = {1, &anAuthItem};
-        flags = kAuthorizationFlagDefaults | kAuthorizationFlagInteractionAllowed | 
-        kAuthorizationFlagPreAuthorize |  
-        kAuthorizationFlagExtendRights;
-        stat = AuthorizationCopyRights(authRef, &execRights, NULL, flags, NULL);
-        if (stat != errAuthorizationSuccess) {
-            NSLog(@"Acquire auth rights failed: %d", stat);
-        }
-        // Construct rsync aguments in C-land
-        const char *path = [[[self activeJob] rsyncPath] UTF8String];
-        int numArgs = [[[self activeJob] rsyncArguments] count];
-        char *args[numArgs+1];
-        for (int i = 0; i < numArgs; i++) {
-            args[i] = [[[[self activeJob] rsyncArguments] objectAtIndex:i] UTF8String];
-        }
-        args[numArgs] = NULL;
-        NSLog(@"rsync args:");
-        for (int i = 0; i < numArgs; i++)
-            NSLog(@"\t%s", args[i]);
-        stat = AuthorizationExecuteWithPrivileges(authRef, path, 
-                                                  kAuthorizationFlagDefaults, args, &rsyncPipe);
-        if (stat == errAuthorizationSuccess) {
-            rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:fileno(rsyncPipe)] autorelease];
+        // LAUNCH BetterAuthSample HELPER TOOL
+        OSStatus ipcErr;
+        OSStatus        installErr;
+        NSDictionary *  request;
+        CFDictionaryRef response;
+        BASFailCode     failCode;
+        
+        response = NULL;
+        request = [NSDictionary 
+                   dictionaryWithObjectsAndKeys:
+                   @kRunRsyncCommand, 
+                   @kBASCommandKey,
+                   [[[self activeJob] rsyncArguments] componentsJoinedByString:@" "],
+                   @kRsyncArgs, nil];
+        ipcErr = BASExecuteRequestInHelperTool(gAuth,
+                                               kYargCommandSet,
+                                               (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
+                                               (CFDictionaryRef) request,
+                                               &response);
+        if (ipcErr == noErr) {
+            commandErr = BASGetErrorFromResponse(response);
+            if (commandErr != noErr) {
+                NSLog(@"Helper tool succeeded but returned error %d", commandErr);
+                return;
+            }
         } else {
-            NSLog(@"Authorization Execute failure: %d", stat);
-            return;
+            failCode = BASDiagnoseFailure(gAuth, (CFStringRef) [[NSBundle mainBundle] bundleIdentifier]);
+            switch (failCode) {
+                case kBASFailDisabled:
+                    smartLog(@"[... tell the user that tool is installed but disabled ...]");
+          //          [... offer to enable it...]
+                    break;
+                case kBASFailPartiallyInstalled:
+                    smartLog(@"[... tell the user that tool is installed incorrectly ...]");
+         //           [... offer to correct it...]
+                    break;
+                case kBASFailNotInstalled:
+                    smartLog(@"[... tell the user that tool is not installed ...]");
+      //              [... offer to install it...]
+                    break;
+                default:
+                    smartLog(@"[... tell the user something generic ...]");
+     //               [... offer to reinstall it ...]
+                    break;
+            }
+            // if [... user agrees ...]
+            if ( true ) {
+                installErr = BASFixFailure(
+                                           gAuth, 
+                                           (CFStringRef) [[NSBundle mainBundle] bundleIdentifier], 
+                                           CFSTR("InstallTool"), 
+                                           CFSTR("HelperTool"), 
+                                           failCode
+                                           );
+                
+                if (installErr == noErr) {
+                    smartLog(@"retry request here");
+                    return;
+                } else {
+                    smartLog(@"Unable to run helper tool");
+                    return;
+                }
+            }
         }
-        
-        
+        // If we got this far, helper tool must've succeeded
+        rsyncOutDescriptor = [[[((NSDictionary *) response)
+                                objectForKey:@kBASDescriptorArrayKey]
+                               objectAtIndex:0] intValue];
+        rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:rsyncOutDescriptor] autorelease];
         
     } else {
         NSPipe * outpipe = [NSPipe pipe];
@@ -301,8 +336,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     smartLog(@"Finished with rsync loop");
     [rsyncOutput closeFile];
     if ([[self activeJob] runAsRoot]) {
-        AuthorizationFree(authRef, kAuthorizationFlagDefaults);
-        fclose(rsyncPipe);
+        close(rsyncOutDescriptor);
     } else {
         [rsyncTask waitUntilExit];
     }
@@ -310,14 +344,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	// Finder can't seem to tell that files have changed unless you tell it:
 	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[[self activeJob] pathTo]];
 	[NSApp endSheet:backupRunningPanel returnCode:1];
-	stat = [rsyncTask terminationStatus];
+	commandErr = [rsyncTask terminationStatus];
 	// TODO: Need user-visible error handling!
-	if (stat == 0)
+	if (commandErr == 0)
 		smartLog(@"Rsync did okay");
-	else if (stat == 20) // rsync recieved SIGUSR1 or SIGINT
+	else if (commandErr == 20) // rsync recieved SIGUSR1 or SIGINT
 		smartLog(@"rsync was cancelled by the user");
 	else
-		smartLog(@"rsync crapped out; exit status %d", stat);
+		smartLog(@"rsync crapped out; exit status %d", commandErr);
 	[rsyncTask release];
 	rsyncTask = nil;
 	[spinner stopAnimation:self];

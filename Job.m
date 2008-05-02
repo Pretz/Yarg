@@ -284,7 +284,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (void)setCopyHidden:(BOOL)yesno {
 	copyHidden = yesno;
 }
-
+- (BOOL)runAsRoot {
+	return runAsRoot;
+}
+- (void)setRunAsRoot:(BOOL)yesno {
+	runAsRoot = yesno;
+}
 - (NSMutableArray *)excludeList {
 	return excludeList;
 }

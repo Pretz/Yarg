@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /* YargController */
 
 #import <Cocoa/Cocoa.h>
+#import <Security/Security.h>
 
 @interface YargController : NSObject
 {
@@ -51,6 +52,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	IBOutlet NSButton *copyHidden;
 	IBOutlet NSButton *copyExtended;
 	IBOutlet NSTextView *filesToIgnore;
+    IBOutlet NSButton *runAsRootCheckbox;
     
     /**** RSYNC PROGRESS PANEL ****/
     IBOutlet NSTextField *runningBackupName;
