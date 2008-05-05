@@ -17,6 +17,14 @@ const BASCommandSpec kYargCommandSet[] = {
         NULL                                    // userData
 	},
     
+    {
+        kStopRsyncCommand,
+        kStopRsyncCommandRightName,
+        "default",
+        NULL,
+        NULL
+    },
+    
     {	kWriteLaunchdJobCommand,                // commandName
         kWriteLauncdJobCommandRightName,        // rightName
         "default",                              // rightDefaultRule    -- by default, anyone can acquire this right

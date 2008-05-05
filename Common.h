@@ -29,8 +29,20 @@
 // outputs:
     // kBASErrorKey (CFNumber)
     // kBASDescriptorArrayKey (CFArray of CFNumber) -- one entry, rsync's in/out pipe
+    // (CFNumber) PID of the rsync task launched
+    #define kRsyncPID "RsyncPID"
     // authorization right
     #define kRunRsyncCommandRightName "com.pretz.yarg.RunRsync"
+
+#define kStopRsyncCommand "StopRsync"
+// inputs:
+// kBASCommandKey (CFString)
+// kRsyncPID (CFNumber) PID of rsync to SIGTERM
+// outputs:
+// kBASErrorKey (CFNumber)
+// kBASDescriptorArrayKey (CFArray of CFNumber) -- one entry, rsync's in/out pipe
+// authorization right
+#define kStopRsyncCommandRightName "com.pretz.yarg.StopRsync"
 
 #define kWriteLaunchdJobCommand "WriteLaunchdJob"
 // inputs:

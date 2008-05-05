@@ -8,12 +8,14 @@
  */
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include <CoreServices/CoreServices.h>
 #include "BetterAuthorizationSampleLib.h"
 
 #include "Common.h"
 
 #define RSYNC_BUF_LEN 4096
+#define RSYNC_PATH "/usr/bin/rsync "
 
 /************************  :-)  ******************   )-:  ************/
 
@@ -55,6 +57,8 @@ static int ForkAndRunRsync(const char *args, pid_t *pid, aslclient asl, aslmsg a
         }
         asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Will exec rsync with the following: %s", args);
         shArgs[2] = (char *) args;
+        /* Try to run rsync in a new session so launchd doesn't reap it */
+        setsid();
         execv("/bin/sh", shArgs); /* Never returns */
         asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Failed to exec rsync!");
         exit(-1);
@@ -83,7 +87,6 @@ static OSStatus DoRunRsync(
     UInt8 rsyncArgsBuff[RSYNC_BUF_LEN];
     pid_t child_pid;
     int rsyncOutDesc;
-    asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "0");
     CFMutableStringRef rsyncPath;
     CFStringRef args;
     CFNumberRef descNum;
@@ -91,15 +94,14 @@ static OSStatus DoRunRsync(
     CFRange range;
     range.location = 0;
     
-    asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "1.");
-
+    /* Get args from request */
     args = CFDictionaryGetValue(request, CFSTR(kRsyncArgs));
     if (args == NULL) {
         asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "rsync args null.");
         return -1;
     }
 
-    rsyncPath = CFStringCreateMutableCopy(kCFAllocatorDefault, RSYNC_BUF_LEN, CFSTR("/usr/bin/rsync "));
+    rsyncPath = CFStringCreateMutableCopy(NULL, RSYNC_BUF_LEN, CFSTR(RSYNC_PATH));
     if (rsyncPath == NULL) {
         asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "CFStringCreateMutableCopy failed");
         return -1;
@@ -112,9 +114,13 @@ static OSStatus DoRunRsync(
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "About to get bytes of rsyncArgs.");
 
     range.length = CFStringGetLength(rsyncPath);
+    /* Copy the full arguments to sh into rsyncArgsBuff */ 
     CFStringGetBytes(rsyncPath, range,
                      kCFStringEncodingUTF8, 0, FALSE, rsyncArgsBuff, RSYNC_BUF_LEN, NULL);
-
+    CFRelease(rsyncPath);
+    
+    /* Looks like CFStringGetBytes doesn't null-terminate */
+    rsyncArgsBuff[range.length] = '\0';
    
     rsyncOutDesc = ForkAndRunRsync((char *)rsyncArgsBuff, &child_pid, asl, aslMsg);
     if (rsyncOutDesc < 0) {
@@ -126,9 +132,43 @@ static OSStatus DoRunRsync(
     descNum = CFNumberCreate(NULL, kCFNumberIntType, &rsyncOutDesc);
     descArray = CFArrayCreateMutable(NULL, 1, &kCFTypeArrayCallBacks);
     CFArrayAppendValue(descArray, descNum);
+    CFRelease(descNum);
     CFDictionaryAddValue(response, CFSTR(kBASDescriptorArrayKey), descArray);
+    CFRelease(descArray);
+    descNum = CFNumberCreate(NULL, kCFNumberIntType, &child_pid);
+    CFDictionaryAddValue(response, CFSTR(kRsyncPID), descNum);
+    CFRelease(descNum);
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Closing pipe input in parent.");
     return retval;
+}
+
+#pragma mark Stop Rsync Command
+
+static OSStatus DoStopRsync(
+    AuthorizationRef			auth,
+    const void *                userData,
+    CFDictionaryRef			    request,
+    CFMutableDictionaryRef      response,
+    aslclient                   asl,
+    aslmsg                      aslMsg
+)
+// Implements the kStopRsyncCommand.  If gRsyncPID is not 0, sends SIGTERM to that PID,
+// otherwise sends SIGTERM to the PID specified in request[kRsyncPID]
+{
+    pid_t rpid;
+    CFNumberRef rpidNum;
+    rpid = gRsyncPID;
+    if (rpid != 0) {
+        kill(rpid, SIGTERM);
+        return noErr;
+    }
+    rpidNum = CFDictionaryGetValue(request, CFSTR(kRsyncPID));
+    if (rpidNum == NULL)
+        return -1;
+    if (CFNumberGetValue(rpidNum, kCFNumberIntType, &rpid) == false)
+        return -1;
+    kill(rpid, SIGTERM);
+    return noErr;
 }
 
 #pragma mark Write Launchd Job Command
@@ -152,6 +192,7 @@ static OSStatus DoWriteLaunchdJob(
 
 static const BASCommandProc kYargCommandProcs[] = {
     DoRunRsync,
+    DoStopRsync,
     DoWriteLaunchdJob,
     NULL
 };

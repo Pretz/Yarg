@@ -237,7 +237,7 @@ extern AuthorizationRef gAuth;
         OSStatus ipcErr;
         OSStatus        installErr;
         NSDictionary *  request;
-        CFDictionaryRef response;
+        NSDictionary * response;
         BASFailCode     failCode;
         
         response = NULL;
@@ -251,9 +251,9 @@ extern AuthorizationRef gAuth;
                                                kYargCommandSet,
                                                (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
                                                (CFDictionaryRef) request,
-                                               &response);
+                                               (CFDictionaryRef *) &response);
         if (ipcErr == noErr) {
-            commandErr = BASGetErrorFromResponse(response);
+            commandErr = BASGetErrorFromResponse((CFDictionaryRef)response);
             if (commandErr != noErr) {
                 NSLog(@"Helper tool succeeded but returned error %d", commandErr);
                 return;
@@ -297,12 +297,13 @@ extern AuthorizationRef gAuth;
                 }
             }
         }
-        // If we got this far, helper tool must've succeeded
-        rsyncOutDescriptor = [[[((NSDictionary *) response)
+        
+        //*** If we got this far, helper tool must've succeeded
+        rsyncOutDescriptor = [[[response
                                 objectForKey:@kBASDescriptorArrayKey]
                                objectAtIndex:0] intValue];
         rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:rsyncOutDescriptor] autorelease];
-        
+        rsyncPID = (pid_t) [[response objectForKey:@kRsyncPID] intValue];
     } else {
         NSPipe * outpipe = [NSPipe pipe];
         [rsyncTask setStandardOutput:outpipe];
@@ -365,7 +366,28 @@ extern AuthorizationRef gAuth;
 
 - (IBAction)stopCurrentBackupJob:(id)sender
 {
-	[rsyncTask terminate];
+    if ([[self activeJob] runAsRoot]) {
+        OSStatus ipcErr;
+        NSDictionary *  request;
+        NSDictionary * response;
+        
+        response = NULL;
+        request = [NSDictionary 
+                   dictionaryWithObjectsAndKeys:
+                   @kStopRsyncCommand, 
+                   @kBASCommandKey,
+                   [NSNumber numberWithInt:(int) rsyncPID],
+                   @kRsyncPID, nil];
+        ipcErr = BASExecuteRequestInHelperTool(gAuth,
+                                               kYargCommandSet,
+                                               (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
+                                               (CFDictionaryRef) request,
+                                               (CFDictionaryRef *) &response);
+    } else {
+        [rsyncTask terminate];
+    }
+
+	
 }
 
 - (IBAction)cancelPassword:(id)sender {

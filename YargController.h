@@ -76,6 +76,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSMutableDictionary *jobsDictionary;
 	NSDateComponents *defaultTime;
 	NSTask *rsyncTask;
+    pid_t rsyncPID;
 	pid_t processGroup;
     BOOL isBuildingFileList;
 }
