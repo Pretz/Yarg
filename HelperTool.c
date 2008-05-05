@@ -19,7 +19,6 @@
 
 /************************  :-)  ******************   )-:  ************/
 
-
 pid_t gRsyncPID = 0;
 
 #pragma mark Run Rsync Command

@@ -78,7 +78,7 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* yarg_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = yarg_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		8D1107320486CEB800E47090 /* yarg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = yarg.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D1107320486CEB800E47090 /* Yarg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yarg.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA01AB7F0B03E577004A54F4 /* YargController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = YargController.h; sourceTree = "<group>"; };
 		FA01AB800B03E577004A54F4 /* YargController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = YargController.m; sourceTree = "<group>"; };
 		FA01AB970B03EA53004A54F4 /* Job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Job.h; sourceTree = "<group>"; };
@@ -176,7 +176,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D1107320486CEB800E47090 /* yarg.app */,
+				8D1107320486CEB800E47090 /* Yarg.app */,
 				FA0429080C176EBA00803AE5 /* syncer */,
 				FA4E300D0DC66A8F0046C99F /* HelperTool */,
 				FA4E301A0DC66AAA0046C99F /* InstallTool */,
@@ -239,9 +239,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8D1107260486CEB800E47090 /* yarg */ = {
+		8D1107260486CEB800E47090 /* Yarg */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "yarg" */;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Yarg" */;
 			buildPhases = (
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
@@ -255,10 +255,10 @@
 				FA4E301F0DC66AB60046C99F /* PBXTargetDependency */,
 				FA4E30210DC66AB60046C99F /* PBXTargetDependency */,
 			);
-			name = yarg;
+			name = Yarg;
 			productInstallPath = "$(HOME)/Applications";
 			productName = yarg;
-			productReference = 8D1107320486CEB800E47090 /* yarg.app */;
+			productReference = 8D1107320486CEB800E47090 /* Yarg.app */;
 			productType = "com.apple.product-type.application";
 		};
 		FA0429070C176EBA00803AE5 /* syncer */ = {
@@ -314,14 +314,14 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "yarg" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Yarg" */;
 			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* yarg */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D1107260486CEB800E47090 /* yarg */,
+				8D1107260486CEB800E47090 /* Yarg */,
 				FA0429070C176EBA00803AE5 /* syncer */,
 				FA4E300C0DC66A8F0046C99F /* HelperTool */,
 				FA4E30190DC66AAA0046C99F /* InstallTool */,
@@ -426,7 +426,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PRODUCT_NAME = yarg;
+				PRODUCT_NAME = Yarg;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
@@ -601,7 +601,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "yarg" */ = {
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Yarg" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4B08A954540054247B /* Debug */,
@@ -610,7 +610,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "yarg" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Yarg" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
