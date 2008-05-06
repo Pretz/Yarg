@@ -99,6 +99,7 @@
 		FAB700BF0DADEF26009A6466 /* iconv3.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = iconv3.icns; sourceTree = "<group>"; };
 		FACDD91D0B0D6AB9004E306D /* additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = additions.h; sourceTree = "<group>"; };
 		FACDD91E0B0D6AB9004E306D /* additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = additions.m; sourceTree = "<group>"; };
+		FACE766B0DD03AC800934DB0 /* HelperUninstall.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = HelperUninstall.sh; sourceTree = "<group>"; };
 		FAD841DF0C0E0099001E7A83 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		FAD841E70C0E0220001E7A83 /* package.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = package.sh; sourceTree = "<group>"; };
 		FAD841F30C0E0684001E7A83 /* makesourceball.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = makesourceball.sh; sourceTree = "<group>"; };
@@ -200,6 +201,7 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				FACE766B0DD03AC800934DB0 /* HelperUninstall.sh */,
 				FA4E303C0DC66BED0046C99F /* BetterAuthorizationSampleLib.h */,
 				FA4E303A0DC66BD90046C99F /* BetterAuthorizationSampleLibInstallTool.c */,
 				FA4E30330DC66BBC0046C99F /* BetterAuthorizationSampleLib.c */,

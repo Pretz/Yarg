@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <CoreServices/CoreServices.h>
 #include "BetterAuthorizationSampleLib.h"
 
@@ -16,10 +17,45 @@
 
 #define RSYNC_BUF_LEN 4096
 #define RSYNC_PATH "/usr/bin/rsync "
+#define PID_FILE "/tmp/com.pretz.yarg.pid"
 
 /************************  :-)  ******************   )-:  ************/
 
 pid_t gRsyncPID = 0;
+
+#pragma mark Helper Functions
+
+static Boolean saveRsyncPid(pid_t pid) {
+    mode_t old_umask;
+    FILE *tmp_file;
+    Boolean result;
+    old_umask = umask(S_IRUSR | S_IWUSR);
+    tmp_file = fopen(PID_FILE, "w");
+    umask(old_umask);
+    if (tmp_file == NULL)
+        return false;
+    if (fprintf(tmp_file, "%d", (int) pid) > 0) {
+        result = false;
+    } else {
+        result = true;
+    }
+    fclose(tmp_file);
+    return result;
+}
+
+static pid_t recoverRsyncPid() {
+    FILE *tmp_file;
+    int recovered_pid;
+    tmp_file = fopen(PID_FILE, "r");
+    if (tmp_file == NULL)
+        return 0;
+    if (fscanf(tmp_file, "%d", &recovered_pid) <= 0) {
+        recovered_pid = 0;
+    }
+    fclose(tmp_file);
+    return recovered_pid;
+    
+}
 
 #pragma mark Run Rsync Command
 
@@ -127,6 +163,7 @@ static OSStatus DoRunRsync(
         return -1;
     }
     gRsyncPID = child_pid;
+    saveRsyncPid(child_pid);
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Returning descriptor for rsync.");
     descNum = CFNumberCreate(NULL, kCFNumberIntType, &rsyncOutDesc);
     descArray = CFArrayCreateMutable(NULL, 1, &kCFTypeArrayCallBacks);
@@ -155,16 +192,20 @@ static OSStatus DoStopRsync(
 // otherwise sends SIGTERM to the PID specified in request[kRsyncPID]
 {
     pid_t rpid;
-    CFNumberRef rpidNum;
+//    CFNumberRef rpidNum;
     rpid = gRsyncPID;
     if (rpid != 0) {
         kill(rpid, SIGTERM);
         return noErr;
-    }
+    } /*
     rpidNum = CFDictionaryGetValue(request, CFSTR(kRsyncPID));
     if (rpidNum == NULL)
         return -1;
     if (CFNumberGetValue(rpidNum, kCFNumberIntType, &rpid) == false)
+        return -1;
+     */
+    rpid = recoverRsyncPid();
+    if (rpid == 0)
         return -1;
     kill(rpid, SIGTERM);
     return noErr;
