@@ -77,6 +77,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (void)setCopyHidden:(BOOL)yn;
 - (BOOL)runAsRoot;
 - (void)setRunAsRoot:(BOOL)yn;
+- (NSString *)plistFileName;
 - (NSArray *)rsyncArguments;
 - (NSDictionary *)asLaunchdPlistDictionary;
 - (NSDictionary *)asSerializedDictionary;

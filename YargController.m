@@ -37,6 +37,8 @@ extern AuthorizationRef gAuth;
 - (void)runJobInNewThread:(id)sender;
 - (void)setTabView:(NSTabView *)tabView Enabled:(BOOL)yesno;
 - (void)setProgressForOutput:(NSString *)line;
+- (BOOL)createPrivilegedLaunchdTask:(Job *) job;
+- (BOOL)performPrivilegedActionWithRequest:(CFDictionaryRef)request andResponse:(CFDictionaryRef *)response;
 @end
 
 
@@ -87,6 +89,7 @@ extern AuthorizationRef gAuth;
 // TODO: This function is getting rather convoluted and hard to read.
 - (IBAction)saveJob:(id)sender
 {
+    BOOL saveResult;
 	Job *job = [self activeJob];
 	// Strip any spaces or tabs from beginning and end of jobName and paths:
 	NSString * strippedJobName = [[jobName stringValue] stringByTrimmingWhitespace];
@@ -107,12 +110,8 @@ extern AuthorizationRef gAuth;
 			@"Please select a valid path.", strippedPathFrom]];
 		return;
 	}
-	// Set our job's data based on advanced check boxes
-	[job setDeleteChanged: [deleteRemote state] == NSOnState ? YES : NO];
-	[job setCopyHidden: [copyHidden state] == NSOnState ? YES : NO];
-	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
-    [job setRunAsRoot: [runAsRootCheckbox state] == NSOnState ? YES : NO];
-	// Make sure no other jobs have the same name (not including whitespace)
+	
+    // Make sure no other jobs have the same name (not including whitespace)
 	NSString * errorFormat = @"You already have a job named \"%@\", not counting case or punctuation. "
 	@"Please give your job a different name.";
 	NSEnumerator *jobEnum = [[jobList content] objectEnumerator];
@@ -120,12 +119,38 @@ extern AuthorizationRef gAuth;
 	while((currentJob = [jobEnum nextObject])) {
 		// I think this shows where ObjC's syntax gets nasty; is there a nicer way to write this?
 		if ([[[jobName stringValue] stringWithoutSpaces] caseInsensitiveCompare:
-			[[currentJob jobName] stringWithoutSpaces]] == NSOrderedSame && currentJob != [self activeJob]) {
+             [[currentJob jobName] stringWithoutSpaces]] == NSOrderedSame && currentJob != [self activeJob]) {
 			[self freakoutAlertTitle:@"Name Collision" Text: 
-				[NSString stringWithFormat: errorFormat, [currentJob jobName]]];
+             [NSString stringWithFormat: errorFormat, [currentJob jobName]]];
 			return;
 		}
 	}
+    
+    if ([job runAsRoot]) {
+        saveResult = [self createPrivilegedLaunchdTask:job];
+    } else {
+        if (! [job writeLaunchdPlist]) {
+            saveResult = NO;
+        } else {
+            saveResult = YES;
+            [self informLaunchd:job];
+        }
+    }
+    if (! saveResult) {
+        [self freakoutAlertTitle:@"Critical Error!" 
+                            Text:[NSString 
+                                  stringWithFormat:@"Job cannot be saved!\n Is %@ writeable?", 
+                                  [job pathToPlist]]];
+        return;
+    }
+
+    
+    // Set our job's data based on advanced check boxes
+	[job setDeleteChanged: [deleteRemote state] == NSOnState ? YES : NO];
+	[job setCopyHidden: [copyHidden state] == NSOnState ? YES : NO];
+	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
+    [job setRunAsRoot: [runAsRootCheckbox state] == NSOnState ? YES : NO];
+    
 	/* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
 		from defaults. */
 	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
@@ -137,6 +162,8 @@ extern AuthorizationRef gAuth;
 	[job setPathTo: strippedPathTo];
 	//[job setExcludeList:[[filesToIgnore string] componentsSeparatedByString:@" "]];
 	[job setExcludeList:[[filesToIgnore string] componentsSeparatedByCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+    
+    /* Save Scheduling Info */
 	if ([scheduleCheckbox state] == NSOnState) {
         int selectedTab = [optBox indexOfTabViewItem:[optBox selectedTabViewItem]];
         [job setScheduleStyle: selectedTab == 0 ? ScheduleMonthly : ScheduleWeekly];
@@ -160,17 +187,30 @@ extern AuthorizationRef gAuth;
 	} else {
         [job setScheduleStyle:ScheduleNone];
     }
+    
 	modifying = NO;
 	smartLog(@"%@", [job asLaunchdPlistDictionary]);
-	if (! [job writeLaunchdPlist]) {
-		[self freakoutAlertTitle:@"Critical Error!" 
-							Text:[NSString stringWithFormat:@"Job cannot be saved!\n Is %@ writeable?", [job pathToPlist]]];
-		return;
-	}
-	[self informLaunchd:job];
 	[jobsDictionary setObject:[job asSerializedDictionary] forKey:[job jobName]];
 	[self synchronizeSettingsToDisk:nil];
 	[self dismissJobEditSheet];
+}
+
+- (BOOL)createPrivilegedLaunchdTask:(Job *) job {
+    NSDictionary *  request;
+    NSDictionary *  response;
+
+    response = NULL;
+    request = [NSDictionary 
+               dictionaryWithObjectsAndKeys:
+               @kWriteLaunchdJobCommand, 
+               @kBASCommandKey,
+               [job asLaunchdPlistDictionary],
+               @kLaunchdDictionary,
+               [job plistFileName],
+               @kNameOfDictionary, nil];
+    
+    return [self performPrivilegedActionWithRequest:(CFDictionaryRef)request
+                                        andResponse:(CFDictionaryRef *)&response];
 }
 
 - (IBAction)runJob:(id)sender
@@ -229,16 +269,15 @@ extern AuthorizationRef gAuth;
 	// Creating the autorelease pool MUST be first thing in this method:
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	[arguments retain];
-    NSFileHandle * rsyncOutput;
+    NSFileHandle * rsyncOutput = nil;
     OSStatus commandErr;
     int rsyncOutDescriptor;
+    id runButton = [arguments objectAtIndex:0];
     if ([[self activeJob] runAsRoot]) {
         // LAUNCH BetterAuthSample HELPER TOOL
-        OSStatus ipcErr;
-        OSStatus        installErr;
         NSDictionary *  request;
         NSDictionary * response;
-        BASFailCode     failCode;
+        BOOL     requestSuccess;
         
         response = NULL;
         request = [NSDictionary 
@@ -247,63 +286,17 @@ extern AuthorizationRef gAuth;
                    @kBASCommandKey,
                    [[[self activeJob] rsyncArguments] componentsJoinedByString:@" "],
                    @kRsyncArgs, nil];
-        ipcErr = BASExecuteRequestInHelperTool(gAuth,
-                                               kYargCommandSet,
-                                               (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
-                                               (CFDictionaryRef) request,
-                                               (CFDictionaryRef *) &response);
-        if (ipcErr == noErr) {
-            commandErr = BASGetErrorFromResponse((CFDictionaryRef)response);
-            if (commandErr != noErr) {
-                NSLog(@"Helper tool succeeded but returned error %d", commandErr);
-                return;
-            }
-        } else {
-            failCode = BASDiagnoseFailure(gAuth, (CFStringRef) [[NSBundle mainBundle] bundleIdentifier]);
-            switch (failCode) {
-                case kBASFailDisabled:
-                    smartLog(@"[... tell the user that tool is installed but disabled ...]");
-          //          [... offer to enable it...]
-                    break;
-                case kBASFailPartiallyInstalled:
-                    smartLog(@"[... tell the user that tool is installed incorrectly ...]");
-         //           [... offer to correct it...]
-                    break;
-                case kBASFailNotInstalled:
-                    smartLog(@"[... tell the user that tool is not installed ...]");
-      //              [... offer to install it...]
-                    break;
-                default:
-                    smartLog(@"[... tell the user something generic ...]");
-     //               [... offer to reinstall it ...]
-                    break;
-            }
-            // if [... user agrees ...]
-            if ( true ) {
-                installErr = BASFixFailure(
-                                           gAuth, 
-                                           (CFStringRef) [[NSBundle mainBundle] bundleIdentifier], 
-                                           CFSTR("InstallTool"), 
-                                           CFSTR("HelperTool"), 
-                                           failCode
-                                           );
-                
-                if (installErr == noErr) {
-                    smartLog(@"retry request here");
-                    return;
-                } else {
-                    smartLog(@"Unable to run helper tool");
-                    return;
-                }
-            }
-        }
         
-        //*** If we got this far, helper tool must've succeeded
-        rsyncOutDescriptor = [[[response
-                                objectForKey:@kBASDescriptorArrayKey]
-                               objectAtIndex:0] intValue];
-        rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:rsyncOutDescriptor] autorelease];
-        rsyncPID = (pid_t) [[response objectForKey:@kRsyncPID] intValue];
+        requestSuccess = [self performPrivilegedActionWithRequest:(CFDictionaryRef)request 
+                                                      andResponse:(CFDictionaryRef *) &response];
+        if (requestSuccess) {
+            //*** If we got this far, helper tool must've succeeded
+            rsyncOutDescriptor = [[[response
+                                    objectForKey:@kBASDescriptorArrayKey]
+                                   objectAtIndex:0] intValue];
+            rsyncOutput = [[[NSFileHandle alloc] initWithFileDescriptor:rsyncOutDescriptor] autorelease];
+            rsyncPID = (pid_t) [[response objectForKey:@kRsyncPID] intValue];
+        }
     } else {
         NSPipe * outpipe = [NSPipe pipe];
         [rsyncTask setStandardOutput:outpipe];
@@ -316,43 +309,44 @@ extern AuthorizationRef gAuth;
          */
         [rsyncTask launch];
     }
-	id runButton = [arguments objectAtIndex:0];
-	NSData * nextChunk;
-	NSString * currentOutput;
-    isBuildingFileList = YES;
-    smartLog(@"about to start rsync loop");
-	// Is it better (and possible) to do this loop asynchronously with NSFileHandle#readInBackgroundAndNotify ?
-	// Additionally, should this loop have its own pool for each loop to conserve memory, or is that overkill?
-	while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
-		currentOutput = [[[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding] autorelease];
-//		smartLog(@"rsync: %@", currentOutput);
-        NSCharacterSet * newLineSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n\v\f"];
-        NSArray *lines = [currentOutput componentsSeparatedByCharacterSet:newLineSet];
-        NSEnumerator * lineEnum = [lines objectEnumerator];
-        NSString * line;
-        while ((line = [lineEnum nextObject])) {
-            [self setProgressForOutput:line];
+    if (rsyncOutput != nil) {
+        NSData * nextChunk;
+        NSString * currentOutput;
+        isBuildingFileList = YES;
+        smartLog(@"about to start rsync loop");
+        // Is it better (and possible) to do this loop asynchronously with NSFileHandle#readInBackgroundAndNotify ?
+        // Additionally, should this loop have its own pool for each loop to conserve memory, or is that overkill?
+        while ([(nextChunk = [rsyncOutput availableData]) length] != 0) {
+            currentOutput = [[[NSString alloc] initWithData:nextChunk encoding:NSUTF8StringEncoding] autorelease];
+            //		smartLog(@"rsync: %@", currentOutput);
+            NSCharacterSet * newLineSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n\v\f"];
+            NSArray *lines = [currentOutput componentsSeparatedByCharacterSet:newLineSet];
+            NSEnumerator * lineEnum = [lines objectEnumerator];
+            NSString * line;
+            while ((line = [lineEnum nextObject])) {
+                [self setProgressForOutput:line];
+            }
         }
-	}
-    smartLog(@"Finished with rsync loop");
-    [rsyncOutput closeFile];
-    if ([[self activeJob] runAsRoot]) {
-        close(rsyncOutDescriptor);
-    } else {
-        [rsyncTask waitUntilExit];
+        smartLog(@"Finished with rsync loop");
+        [rsyncOutput closeFile];
+        if ([[self activeJob] runAsRoot]) {
+            close(rsyncOutDescriptor);
+        } else {
+            [rsyncTask waitUntilExit];
+        }
+        commandErr = [rsyncTask terminationStatus];
+        // TODO: Need user-visible error handling!
+        if (commandErr == 0)
+            smartLog(@"Rsync did okay");
+        else if (commandErr == 20) // rsync recieved SIGUSR1 or SIGINT
+            smartLog(@"rsync was cancelled by the user");
+        else
+            smartLog(@"rsync crapped out; exit status %d", commandErr);
     }
 	[backupRunningPanel orderOut:self];
 	// Finder can't seem to tell that files have changed unless you tell it:
 	[[NSWorkspace sharedWorkspace] noteFileSystemChanged:[[self activeJob] pathTo]];
 	[NSApp endSheet:backupRunningPanel returnCode:1];
-	commandErr = [rsyncTask terminationStatus];
-	// TODO: Need user-visible error handling!
-	if (commandErr == 0)
-		smartLog(@"Rsync did okay");
-	else if (commandErr == 20) // rsync recieved SIGUSR1 or SIGINT
-		smartLog(@"rsync was cancelled by the user");
-	else
-		smartLog(@"rsync crapped out; exit status %d", commandErr);
 	[rsyncTask release];
 	rsyncTask = nil;
 	[spinner stopAnimation:self];
@@ -362,6 +356,77 @@ extern AuthorizationRef gAuth;
 	[pool release];
 	// TODO: This doesn't seem to be thread-safe.  Send a notification to the main thread instead.
 	[runButton setEnabled:YES];
+}
+
+- (BOOL)performPrivilegedActionWithRequest:(CFDictionaryRef)request andResponse:(CFDictionaryRef *)response {
+    OSStatus ipcErr;        
+    OSStatus        installErr;
+    OSStatus commandErr;
+    BASFailCode     failCode;
+    int alertResult;
+    NSString * alertTitle;
+    NSString * alertText;
+    
+    ipcErr = BASExecuteRequestInHelperTool(gAuth,
+                                           kYargCommandSet,
+                                           (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
+                                           request,
+                                           response);
+    if (ipcErr == noErr) {
+        commandErr = BASGetErrorFromResponse((CFDictionaryRef)*response);
+        if (commandErr != noErr) {
+            smartLog(@"Helper tool succeeded but returned error %d", commandErr);
+            return NO;
+        }
+        return YES;
+    } else {
+        failCode = BASDiagnoseFailure(gAuth, (CFStringRef) [[NSBundle mainBundle] bundleIdentifier]);
+        switch (failCode) {
+
+            case kBASFailNotInstalled:
+                smartLog(@"[... tell the user that tool is not installed ...]");
+                //              [... offer to install it...]
+                alertTitle = NSLocalizedString(@"Help Needed", @"Title of alert box if helper not installed");
+                alertText = @"Yarg needs to install a special helper tool. You will need to enter your password.";
+                break;
+            case kBASFailPartiallyInstalled:
+            case kBASFailDisabled:
+            default:
+                smartLog(@"[... tell the user that tool is installed but disabled ...]");
+                //          [... offer to enable it...]
+                alertTitle = @"Authentication Error";
+                alertText = @"Yarg's authorization tool has become damaged. Please re-install it." 
+                            @" You will need to enter your password";
+                break;
+        }
+        alertResult = NSRunAlertPanel(alertTitle, alertText, @"Install", @"Cancel", NULL);
+        if ( alertResult == NSAlertDefaultReturn) {
+            installErr = BASFixFailure(
+                                       gAuth, 
+                                       (CFStringRef) [[NSBundle mainBundle] bundleIdentifier], 
+                                       CFSTR("InstallTool"), 
+                                       CFSTR("HelperTool"), 
+                                       failCode
+                                       );
+            
+            if (installErr == noErr) {
+                ipcErr = BASExecuteRequestInHelperTool(gAuth,
+                                                       kYargCommandSet,
+                                                       (CFStringRef) [[NSBundle mainBundle] bundleIdentifier],
+                                                       request,
+                                                       response);
+                if (ipcErr == noErr) {
+                    return YES;
+                }
+                return NO;
+            } else {
+                smartLog(@"Unable to run helper tool");
+                return NO;
+            }
+        } else {
+            return NO;
+        }
+    }   
 }
 
 - (IBAction)stopCurrentBackupJob:(id)sender
@@ -451,7 +516,7 @@ extern AuthorizationRef gAuth;
 }
 
 
-- (IBAction)resizeBackupWindow:(id)sender {
+- (IBAction)advancedCheckboxChanged:(id)sender {
 	
 	if ([sender state] == NSOffState){
 /*        [optBox setEnabled:NO];
@@ -569,7 +634,7 @@ extern AuthorizationRef gAuth;
 	[pathTo setStringValue: [job pathTo]];
     [dayOfWeekChooser deselectAllCells];
     [scheduleCheckbox setState: [job scheduleStyle] == ScheduleNone ? NSOffState : NSOnState];
-    [self resizeBackupWindow:scheduleCheckbox];
+    [self advancedCheckboxChanged:scheduleCheckbox];
     if ([job scheduleStyle] == ScheduleWeekly) {
         [optBox selectTabViewItemAtIndex:1];
         NSEnumerator * enumer = [[job daysToRun] objectEnumerator];

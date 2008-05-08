@@ -88,7 +88,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 - (IBAction)killJob:(id)sender;
 - (IBAction)browseFrom:(id)sender;
 - (IBAction)browseTo:(id)sender;
-- (IBAction)resizeBackupWindow:(id)sender;
+- (IBAction)advancedCheckboxChanged:(id)sender;
 - (IBAction)dayOfWeekPressed:(id)sender;
 - (IBAction)switchAdvancedBasicView:(id)sender;
 - (IBAction)toggleDrawer:(id)sender;

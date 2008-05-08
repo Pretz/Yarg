@@ -22,7 +22,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 #import "Job.h"
 
-
 @implementation Job
 /*
 + (Job)newJobFromPanel:(NSPanel *)panel modalFor:(NSWindow *)window {
@@ -60,6 +59,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[job setCopyHidden: [[dictionary objectForKey:@"copyHidden"] boolValue]];
 	[job setDeleteChanged: [[dictionary objectForKey:@"deleteChanged"] boolValue]];
 	[job setCopyExtended: [[dictionary objectForKey:@"copyExtended"] boolValue]];
+    [job setRunAsRoot:[[dictionary objectForKey:@"runAsRoot"] boolValue]];
 	[job setExcludeList: [dictionary objectForKey:@"excludeList"]];
 	[job setPathToPlist: [dictionary objectForKey:@"pathToPlist"]];
 	return [job autorelease];
@@ -99,7 +99,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity: 4];
 	[dict setObject:[[NSString stringWithFormat:@"%@%@", @"com.yarg.", jobName] stringWithoutSpaces] 
 			 forKey:@"Label"];
-	NSMutableArray *programArguments = [NSMutableArray arrayWithObject:[self rsyncPath]];
+	NSMutableArray *programArguments = [NSMutableArray arrayWithObject:@"rsync"];
 	[programArguments addObjectsFromArray:[self rsyncArguments]];
 	if ([self scheduleStyle] != ScheduleNone) {
         NSEnumerator *days = [daysToRun objectEnumerator];
@@ -134,6 +134,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[dict setObject:[NSNumber numberWithBool:copyExtended] forKey:@"copyExtended"];
 	[dict setObject:[NSNumber numberWithBool:copyHidden] forKey:@"copyHidden"];
 	[dict setObject:[NSNumber numberWithBool:deleteChanged] forKey:@"deleteChanged"];
+    [dict setObject:[NSNumber numberWithBool:[self runAsRoot]] forKey:@"runAsRoot"];
 	[dict setObject:excludeList forKey:@"excludeList"];
 	[dict setObject:pathFrom forKey:@"pathFrom"];
 	[dict setObject:pathTo forKey:@"pathTo"];
@@ -151,9 +152,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /*! Writes a launchd plist file according to launchd.plist(5) into the appropriate LaunchAgents dir
  *  for the current user. Returns YES on success and NO on failure.
  */
-- (BOOL)writeLaunchdPlist {
-	if (runAsRoot) {
-		smartLog(@"Root backup jobs incomplete");
+- (BOOL)writeLaunchdPlist {     
+    if ([self runAsRoot]) {
+        return NO;
 	} else {
 		// This is supposed to be "portable":
 		NSArray *userLibraries = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,NSUserDomainMask,YES);
@@ -165,7 +166,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 				return NO;
 			}
 		}
-		NSString *filename = [NSString stringWithFormat:@"com.yarg.%@.plist", [jobName stringWithoutSpaces]];
+		NSString *filename = [self plistFileName];
 		// savePath = ~/Library/LaunchAgents/com.yarg.JOBNAME.plist
 		NSString *savePath = [pathToLaunchAgents stringByAppendingPathComponent:filename];
 		// if jobname changed after file save, delete old file!
@@ -181,6 +182,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	}
 	return YES;
 }
+
+- (NSString *)plistFileName {
+    return [NSString stringWithFormat:@"com.yarg.%@.plist", [jobName stringWithoutSpaces]];
+}
+
 /*! Deletes the launchd plist associated with this job if it exists.
  *  Returns YES on success and NO if the file does not exist or cannot be deleted.
  */

@@ -16,8 +16,12 @@
 #include "Common.h"
 
 #define RSYNC_BUF_LEN 4096
-#define RSYNC_PATH "/usr/bin/rsync "
+#define RSYNC_PATH "/usr/bin/rsync"
 #define PID_FILE "/tmp/com.pretz.yarg.pid"
+#define kBackupPlistPath "/Library/LaunchAgents/"
+#define kDictSizeLimit (1024 * 1024)
+#define kLaunchdFileFlags O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW
+#define kLaunchdFilePerms S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 
 /************************  :-)  ******************   )-:  ************/
 
@@ -26,15 +30,13 @@ pid_t gRsyncPID = 0;
 #pragma mark Helper Functions
 
 static Boolean saveRsyncPid(pid_t pid) {
-    mode_t old_umask;
     FILE *tmp_file;
     Boolean result;
-    old_umask = umask(S_IRUSR | S_IWUSR);
     tmp_file = fopen(PID_FILE, "w");
-    umask(old_umask);
+    fchmod(fileno(tmp_file), S_IRUSR | S_IWUSR);
     if (tmp_file == NULL)
         return false;
-    if (fprintf(tmp_file, "%d", (int) pid) > 0) {
+    if (fprintf(tmp_file, "%d\n", (int) pid) > 0) {
         result = false;
     } else {
         result = true;
@@ -141,8 +143,10 @@ static OSStatus DoRunRsync(
         asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "CFStringCreateMutableCopy failed");
         return -1;
     }
-    
+    /*
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "length of string: %d", CFStringGetLength(rsyncPath));
+    */
+    CFStringAppend(rsyncPath, CFSTR(" "));
     
     CFStringAppend(rsyncPath, args);
 
@@ -213,6 +217,67 @@ static OSStatus DoStopRsync(
 
 #pragma mark Write Launchd Job Command
 
+static int writeDictionaryToDescriptor(CFDictionaryRef dict, int fdOut) {
+    // Adapted from BASWriteDictionary() and BASWrite()
+    
+    int                 err = 0;
+	CFDataRef			dictData;
+    char *	cursor;
+	size_t	bytesLeft;
+	ssize_t bytesThisTime;
+    
+    // Pre-conditions
+    
+	assert(dict != NULL);
+	assert(fdOut >= 0);
+	
+	dictData   = NULL;
+    
+    // Get the dictionary as XML data.
+    
+	dictData = CFPropertyListCreateXMLData(NULL, dict);
+	if (dictData == NULL) {
+		err = ENOMEM;
+	}
+    
+    // Send the length, then send the data.  Always send the length as a big-endian 
+    // uint32_t, so that the app and the helper tool can be different architectures.
+    //
+    // The MoreAuthSample version of this code erroneously assumed that CFDataGetBytePtr 
+    // can fail and thus allocated an extra buffer to copy the data into.  In reality, 
+    // CFDataGetBytePtr can't fail, so this version of the code doesn't do the unnecessary 
+    // allocation.
+    
+    if ( (err == 0) && ((bytesLeft = CFDataGetLength(dictData)) > kDictSizeLimit) ) {
+        err = EINVAL;
+    }
+	if (err == 0) {
+        cursor = (char *) CFDataGetBytePtr(dictData);
+        while (err == 0 && bytesLeft != 0) {
+            bytesThisTime = write(fdOut, cursor, bytesLeft);
+            if (bytesThisTime > 0) {
+                cursor    += bytesThisTime;
+                bytesLeft -= bytesThisTime;
+            } else if (bytesThisTime == 0) {
+                err = EIO;
+            } else {
+                assert(bytesThisTime == -1);
+                err = errno;
+                if (err == EINTR) {
+                    err = 0;		// let's loop again
+                }
+            }
+        }
+	}
+    
+	if (dictData != NULL) {
+		CFRelease(dictData);
+	}
+    
+	return err;
+    
+}
+
 static OSStatus DoWriteLaunchdJob(
     AuthorizationRef			auth,
     const void *                userData,
@@ -224,7 +289,56 @@ static OSStatus DoWriteLaunchdJob(
 // Implements the kWriteLaunchdJobCommand.  Returns noErr on success.
 {	
     OSStatus retval = noErr;
-
+    CFDictionaryRef launchdJob;
+    CFStringRef rsyncPath;
+    CFStringRef launchdFileName;
+    CFMutableStringRef fullPathToPlist;
+    UInt8 fullPathToPlistCString[RSYNC_BUF_LEN];
+    int fdForPlist;
+    CFRange range;
+    range.location = 0;
+    launchdJob = CFDictionaryGetValue(request, CFSTR(kLaunchdDictionary));
+    if (launchdJob == NULL)
+        return -1;
+    /* Validate args */
+    rsyncPath = CFDictionaryGetValue(launchdJob, CFSTR("Program"));
+    if (CFStringCompare(rsyncPath, CFSTR(RSYNC_PATH), 0) != kCFCompareEqualTo) {
+        asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Tried to write launchd job that doesn't run rsync");
+        return -1;
+    }
+    
+    if ((launchdFileName = CFDictionaryGetValue(request, CFSTR(kNameOfDictionary))) == NULL) {
+        asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Request didn't contain dest filename for launchd job");
+        return -1;
+    }
+    if ((fullPathToPlist = CFStringCreateMutableCopy(NULL, 0, CFSTR(kBackupPlistPath))) == NULL) {
+        asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Memory error");
+        return -1;
+    }
+    CFStringAppend(fullPathToPlist, launchdFileName);
+    
+    range.length = CFStringGetLength(fullPathToPlist);
+    CFStringGetBytes(fullPathToPlist, range,
+                     kCFStringEncodingUTF8, 0, FALSE, fullPathToPlistCString, RSYNC_BUF_LEN, NULL);
+    fullPathToPlistCString[range.length] = '\0';
+    asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Going to write plist to %s", fullPathToPlistCString);
+    
+    fdForPlist = open((char *)fullPathToPlistCString, kLaunchdFileFlags, kLaunchdFilePerms);
+    if (fdForPlist <= 0) {
+        retval = errno;
+    }
+    if (retval == noErr) {
+        /* Still must chmod file in case it already exists */
+        fchmod(fdForPlist, kLaunchdFilePerms);
+        asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Descriptor of plist: %d", fdForPlist);
+    }
+    if ( retval == noErr &&
+        (retval = writeDictionaryToDescriptor(launchdJob, fdForPlist)) != noErr) {
+        asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Failed to write plist file");
+    }
+    
+    CFRelease(fullPathToPlist);
+    
     return retval;
 }
 
