@@ -39,6 +39,7 @@ extern AuthorizationRef gAuth;
 - (void)setProgressForOutput:(NSString *)line;
 - (BOOL)createPrivilegedLaunchdTask:(Job *) job;
 - (BOOL)performPrivilegedActionWithRequest:(CFDictionaryRef)request andResponse:(CFDictionaryRef *)response;
+- (BOOL)deletePlistForJob:(Job *)job;
 @end
 
 
@@ -51,22 +52,44 @@ extern AuthorizationRef gAuth;
 
 - (IBAction)deleteJob:(id)sender
 {
+    int panelResult;
 	Job * job = [self activeJob];
-	if (! [job deleteLaunchdPlist]) {
-		NSBeginCriticalAlertSheet(@"Critical Error!" , @"Okay", 
-								  nil, 
-								  nil, 
-								  mainView, 
-								  self, 
-								  NULL, 
-								  NULL, 
-								  NULL,							 
-								  [NSString stringWithFormat:@"Job cannot be deleted!\n Is %@ writeable?", [job pathToPlist]]);
-		return;
-	}
+    if (! [self deletePlistForJob:job]) {
+        panelResult = 
+        NSRunCriticalAlertPanel(
+                                @"Critical Error!" , // Title
+                                [NSString stringWithFormat:@"Cannot delete %@! Delete job anyway?", [job pathToPlist]],
+                                @"Yes", 
+                                @"No", 
+                                nil, nil
+                                );
+        if (panelResult != NSAlertDefaultReturn) {
+            return;
+        }
+    }
 	[jobsDictionary removeObjectForKey:[job jobName]];
 	[jobList removeObject:job];
 	[self synchronizeSettingsToDisk:nil];
+}
+
+- (BOOL)deletePlistForJob:(Job *)job {
+    if ([job runAsRoot]) {
+        NSDictionary * request;
+        NSDictionary * response = NULL;
+        request = [NSDictionary 
+                   dictionaryWithObjectsAndKeys:
+                   @kDeleteLaunchdJobCommand, 
+                   @kBASCommandKey,
+                   [job plistFileName],
+                   @kNameOfDictionary, nil];
+        return [self performPrivilegedActionWithRequest:(CFDictionaryRef)request
+                                            andResponse:(CFDictionaryRef *)&response];
+    } else {
+        if (! [job deleteLaunchdPlist]) {
+            return NO;
+        }
+        return YES;
+    }
 }
 
 - (IBAction)modifyJob:(id)sender
@@ -126,36 +149,12 @@ extern AuthorizationRef gAuth;
 		}
 	}
     
-    if ([job runAsRoot]) {
-        saveResult = [self createPrivilegedLaunchdTask:job];
-    } else {
-        if (! [job writeLaunchdPlist]) {
-            saveResult = NO;
-        } else {
-            saveResult = YES;
-            [self informLaunchd:job];
-        }
-    }
-    if (! saveResult) {
-        [self freakoutAlertTitle:@"Critical Error!" 
-                            Text:[NSString 
-                                  stringWithFormat:@"Job cannot be saved!\n Is %@ writeable?", 
-                                  [job pathToPlist]]];
-        return;
-    }
-
-    
     // Set our job's data based on advanced check boxes
 	[job setDeleteChanged: [deleteRemote state] == NSOnState ? YES : NO];
 	[job setCopyHidden: [copyHidden state] == NSOnState ? YES : NO];
 	[job setCopyExtended: [copyExtended state] == NSOnState ? YES : NO];
     [job setRunAsRoot: [runAsRootCheckbox state] == NSOnState ? YES : NO];
     
-	/* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
-		from defaults. */
-	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
-		[jobsDictionary removeObjectForKey:[job jobName]];
-	}
 	smartLog(@"saving job called %@", strippedJobName);
 	[job setJobName: strippedJobName];
 	[job setPathFrom: strippedPathFrom];
@@ -184,12 +183,43 @@ extern AuthorizationRef gAuth;
         }
         [job setTimeOfJob:[[NSCalendar currentCalendar] components:NSHourCalendarUnit | NSMinuteCalendarUnit
                                                           fromDate:date]];
+      /* Take care of launchd stuff 
+         TODO: We should really save the plist file then update the settings, in case there's an error saving,
+         but to do that we have to have all the scheduling info set up right, so somehow that needs to be refactored */
+        if ([job runAsRoot]) {
+            [job setPathToPlist:[NSString stringWithFormat:@"%@%@", @"/Library/LaunchAgents/", [job plistFileName]]];
+            saveResult = [self createPrivilegedLaunchdTask:job];
+        } else {
+            if (! [job writeLaunchdPlist]) {
+                saveResult = NO;
+            } else {
+                saveResult = YES;
+                [self informLaunchd:job];
+            }
+        }
+        
+        if (! saveResult) {
+            [self freakoutAlertTitle:@"Critical Error!" 
+                                Text:[NSString 
+                                      stringWithFormat:@"Job cannot be saved!\n Is %@ writeable?", 
+                                      [job pathToPlist]]];
+            return;
+        }
 	} else {
+        if ([job scheduleStyle] != ScheduleNone) {
+            /* If the job was scheduled but is no longer, delete plists etc. */
+            [self deletePlistForJob:job];
+        }
         [job setScheduleStyle:ScheduleNone];
     }
     
 	modifying = NO;
 	smartLog(@"%@", [job asLaunchdPlistDictionary]);
+    /* If we're modifying jobName, gotta make sure to remove old job (which is keyed off of jobName)
+     from defaults. */
+	if (modifying && (![strippedJobName isEqualToString:[job jobName]])) {
+		[jobsDictionary removeObjectForKey:[job jobName]];
+	}
 	[jobsDictionary setObject:[job asSerializedDictionary] forKey:[job jobName]];
 	[self synchronizeSettingsToDisk:nil];
 	[self dismissJobEditSheet];

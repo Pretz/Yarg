@@ -16,6 +16,7 @@
 #include "Common.h"
 
 #define RSYNC_BUF_LEN 4096
+#define kSmallBuff 1024
 #define RSYNC_PATH "/usr/bin/rsync"
 #define PID_FILE "/tmp/com.pretz.yarg.pid"
 #define kBackupPlistPath "/Library/LaunchAgents/"
@@ -78,11 +79,6 @@ static int ForkAndRunRsync(const char *args, pid_t *pid, aslclient asl, aslmsg a
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Created pipe, forking.");
     child_pid = fork();
     if (child_pid == 0) { /* Child */
-        /*        int stdout2 = fileno(stdout);
-         if (close(stdout2) != 0) {
-         asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Failed to close rsync fork stdout: %d.", errno);
-         exit(-1);
-         }*/
         if (dup2(rsyncPipe[1], STDOUT_FILENO) < 0) {
             asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Failed to dup2 pipe for rsync's stdout: %d.", errno);
             exit(-1);
@@ -278,6 +274,66 @@ static int writeDictionaryToDescriptor(CFDictionaryRef dict, int fdOut) {
     
 }
 
+static int informLaunchd(char * command, char * plistName) {
+    int				err;
+	const char *	args[4];
+	pid_t			childPID;
+	pid_t			waitResult;
+	int				status;
+    char  plistPath[kSmallBuff];
+    
+    strncpy(plistPath, kBackupPlistPath, kSmallBuff);
+    strncat(plistPath, plistName, kSmallBuff - strlen(kBackupPlistPath) -1);
+	
+	// Pre-conditions.
+    if (command == NULL || plistPath == NULL ||
+        (strncmp("load", command, 5) != 0 &&
+         strncmp("unload", command, 7) != 0)) {
+        return EINVAL;
+    }
+    
+    args[0] = "/bin/launchctl";
+    args[1] = command;
+    args[2] = plistPath;
+    args[3] = NULL;
+    
+    fprintf(stderr, "%s %s '%s' \n", args[0], args[1], args[2]);
+    
+    childPID = fork();
+    switch (childPID) {
+        case 0:
+            err = execv(args[0], (char **) args);
+            if (err < 0) {
+                exit(errno);
+            }
+            break;
+        case -1:
+            err = errno;
+            break;
+        default:
+            err = 0;
+            break;
+    }
+    /* Parent */
+    if (err == 0) {
+        do {
+			waitResult = waitpid(childPID, &status, 0);
+		} while ( (waitResult == -1) && (errno == EINTR) );
+/*        
+		if (waitResult < 0) {
+			err = errno;
+		} else {
+			assert(waitResult == childPID);
+            
+            if ( ! WIFEXITED(status) || (WEXITSTATUS(status) != 0) ) {
+                err = EINVAL;
+            }
+		} */
+    }
+    
+    return err;
+}
+
 static OSStatus DoWriteLaunchdJob(
     AuthorizationRef			auth,
     const void *                userData,
@@ -294,9 +350,11 @@ static OSStatus DoWriteLaunchdJob(
     CFStringRef launchdFileName;
     CFMutableStringRef fullPathToPlist;
     UInt8 fullPathToPlistCString[RSYNC_BUF_LEN];
+    UInt8 nameOfPlist[kSmallBuff];
     int fdForPlist;
     CFRange range;
     range.location = 0;
+    
     launchdJob = CFDictionaryGetValue(request, CFSTR(kLaunchdDictionary));
     if (launchdJob == NULL)
         return -1;
@@ -338,8 +396,77 @@ static OSStatus DoWriteLaunchdJob(
     }
     
     CFRelease(fullPathToPlist);
+    if (retval == noErr) {
+        /* Tell launchd about job */
+        range.length = CFStringGetLength(launchdFileName);
+        CFStringGetBytes(launchdFileName, range,
+                         kCFStringEncodingUTF8, 0, FALSE, nameOfPlist, kSmallBuff, NULL);
+        nameOfPlist[range.length] = '\0';
+        
+        retval = informLaunchd("unload", (char *) nameOfPlist);
+        retval = informLaunchd("load", (char *) nameOfPlist);
+    }
+
     
     return retval;
+}
+
+#pragma mark Delete Launchd Job Command
+
+static OSStatus DoDeleteLaunchdJob(
+    AuthorizationRef			auth,
+    const void *                userData,
+    CFDictionaryRef			    request,
+    CFMutableDictionaryRef      response,
+    aslclient                   asl,
+    aslmsg                      aslMsg
+)
+// Implements the kDeleteLaunchdJobCommand.  Returns noErr on success.
+{
+    OSStatus retval = noErr;
+    CFStringRef plistName;
+    char pathToPlist[kSmallBuff];
+    CFRange range;
+    int pathLen;
+    range.location = 0;
+    
+    asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Beginning DoDeleteLaunchdJob");
+    
+    if ((plistName = CFDictionaryGetValue(request, CFSTR(kNameOfDictionary))) == NULL) {
+        retval = EINVAL;
+        asl_log(asl, aslMsg, ASL_LEVEL_ERR, "Couldn't get plist out of query");
+    }
+    
+    range.length = CFStringGetLength(plistName);
+    if (range.length > kSmallBuff) {
+        retval = EINVAL;
+    }
+    
+    if (retval == noErr) {
+        /* pathToPlist isn't a path here, it's just a filename */
+        CFStringGetBytes(plistName, range,
+                         kCFStringEncodingUTF8, 0, FALSE, (UInt8 *) pathToPlist, kSmallBuff, NULL);
+        pathToPlist[range.length] = '\0';
+        retval = informLaunchd("unload", pathToPlist);
+        asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Informed launchd to unload %s and heard %d.", pathToPlist, retval);
+    }
+    
+    if (retval == noErr) {
+        pathLen = strlen(kBackupPlistPath);
+        strncpy(pathToPlist, kBackupPlistPath, pathLen);
+        range.length = CFStringGetLength(plistName);
+        CFStringGetBytes(plistName, range,
+                         kCFStringEncodingUTF8, 0, FALSE, (UInt8 *) pathToPlist+pathLen, kSmallBuff-pathLen, NULL);
+        pathToPlist[range.length+pathLen] = '\0';
+        asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Unlinking %s", pathToPlist);
+        retval = unlink(pathToPlist);
+        if (retval < 0) {
+            retval = errno;
+        }
+    }
+    
+    return retval;
+    
 }
 
 #pragma mark BAS Infrastructure
@@ -348,6 +475,7 @@ static const BASCommandProc kYargCommandProcs[] = {
     DoRunRsync,
     DoStopRsync,
     DoWriteLaunchdJob,
+    DoDeleteLaunchdJob,
     NULL
 };
 

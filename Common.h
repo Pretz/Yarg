@@ -54,7 +54,18 @@
 // outputs:
     // kBASErrorKey (CFNumber)
     // authorization right
-    #define kWriteLauncdJobCommandRightName "com.pretz.yarg.WriteLaunchdJob"
+    #define kWriteLaunchdJobCommandRightName "com.pretz.yarg.WriteLaunchdJob"
+
+#define kDeleteLaunchdJobCommand "DeleteLaunchdJob"
+// inputs:
+// kBASCommandKey (CFString)
+// (CFDictionary) -- Dictionary to write to file
+// (CFString) -- name to give to dictionary file
+// #define kNameOfDictionary "NameOfDict"
+// outputs:
+// kBASErrorKey (CFNumber)
+// authorization right
+#define kDeleteLaunchdJobCommandRightName "com.pretz.yarg.DeleteLaunchdJob"
 
 extern const BASCommandSpec kYargCommandSet[];
 

@@ -26,9 +26,16 @@ const BASCommandSpec kYargCommandSet[] = {
     },
     
     {	kWriteLaunchdJobCommand,                // commandName
-        kWriteLauncdJobCommandRightName,        // rightName
+        kWriteLaunchdJobCommandRightName,        // rightName
         "default",                              // rightDefaultRule
         "Write Launchd Password Prompt",
+        NULL                                    // userData
+	},
+    
+    {	kDeleteLaunchdJobCommand,                // commandName
+        kDeleteLaunchdJobCommandRightName,        // rightName
+        "default",                              // rightDefaultRule
+        NULL,
         NULL                                    // userData
 	},
     

@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
                        gAuth, 
                        kYargCommandSet, 
                        CFBundleGetIdentifier(CFBundleGetMainBundle()), 
-                       NULL
+                       CFSTR("Localizable")
                        );
     
     return NSApplicationMain(argc,  (const char **) argv);
