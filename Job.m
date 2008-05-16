@@ -55,13 +55,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
         job->hourOfDay = [[dictionary objectForKey:@"Hour"] intValue];
         job->minuteOfHour = [[dictionary objectForKey:@"Minute"] intValue];
         [job setDaysToRun:[dictionary objectForKey:@"daysToRun"]];
+        [job setPathToPlist: [dictionary objectForKey:@"pathToPlist"]];
     }
 	[job setCopyHidden: [[dictionary objectForKey:@"copyHidden"] boolValue]];
 	[job setDeleteChanged: [[dictionary objectForKey:@"deleteChanged"] boolValue]];
 	[job setCopyExtended: [[dictionary objectForKey:@"copyExtended"] boolValue]];
     [job setRunAsRoot:[[dictionary objectForKey:@"runAsRoot"] boolValue]];
 	[job setExcludeList: [dictionary objectForKey:@"excludeList"]];
-	[job setPathToPlist: [dictionary objectForKey:@"pathToPlist"]];
 	return [job autorelease];
 }
 
@@ -138,11 +138,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	[dict setObject:excludeList forKey:@"excludeList"];
 	[dict setObject:pathFrom forKey:@"pathFrom"];
 	[dict setObject:pathTo forKey:@"pathTo"];
-	[dict setObject:pathToPlist forKey:@"pathToPlist"];
 	[dict setObject:jobName forKey:@"jobName"];
     [dict setObject:[NSNumber numberWithInt:scheduleStyle] forKey:@"scheduleStyle"];
     [dict setObject:[self rsyncPath] forKey:@"Program"];
     if ([self scheduleStyle] != ScheduleNone) {
+        [dict setObject:pathToPlist forKey:@"pathToPlist"];
         [dict setObject:[self daysToRun] forKey:@"daysToRun"];
         [dict setObject:[NSNumber numberWithInt:hourOfDay] forKey:@"Hour"];
         [dict setObject:[NSNumber numberWithInt:minuteOfHour] forKey:@"Minute"];
