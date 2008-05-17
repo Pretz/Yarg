@@ -54,7 +54,7 @@ extern AuthorizationRef gAuth;
 {
     int panelResult;
 	Job * job = [self activeJob];
-    if (! [self deletePlistForJob:job]) {
+    if ([job scheduleStyle] != ScheduleNone && ![self deletePlistForJob:job]) {
         panelResult = 
         NSRunCriticalAlertPanel(
                                 @"Critical Error!" , // Title

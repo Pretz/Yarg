@@ -19,14 +19,14 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>005</string>
-	<key>CFBundleShortVersionString</key>
-	<string>0.3 pre-beta</string>
+	<string>0.3</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2006-2008, Alex Pretzlav</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+    <key>SUFeedURL</key>
+    <string>http://alex.turnlav.net/yarg/appcast.xml</string> 
 </dict>
 </plist>

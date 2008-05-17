@@ -26,8 +26,6 @@
 
 /************************  :-)  ******************   )-:  ************/
 
-pid_t gRsyncPID = 0;
-
 #pragma mark Helper Functions
 
 static Boolean saveRsyncPid(pid_t pid) {
@@ -162,7 +160,6 @@ static OSStatus DoRunRsync(
         asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Couldn't invoke rsync.");
         return -1;
     }
-    gRsyncPID = child_pid;
     saveRsyncPid(child_pid);
     asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Returning descriptor for rsync.");
     descNum = CFNumberCreate(NULL, kCFNumberIntType, &rsyncOutDesc);
@@ -192,18 +189,7 @@ static OSStatus DoStopRsync(
 // otherwise sends SIGTERM to the PID specified in request[kRsyncPID]
 {
     pid_t rpid;
-//    CFNumberRef rpidNum;
-    rpid = gRsyncPID;
-    if (rpid != 0) {
-        kill(rpid, SIGTERM);
-        return noErr;
-    } /*
-    rpidNum = CFDictionaryGetValue(request, CFSTR(kRsyncPID));
-    if (rpidNum == NULL)
-        return -1;
-    if (CFNumberGetValue(rpidNum, kCFNumberIntType, &rpid) == false)
-        return -1;
-     */
+
     rpid = recoverRsyncPid();
     if (rpid == 0)
         return -1;
