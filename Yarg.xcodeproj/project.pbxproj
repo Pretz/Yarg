@@ -441,7 +441,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PRODUCT_NAME = yarg;
+				PRODUCT_NAME = Yarg;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
