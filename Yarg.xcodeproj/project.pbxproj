@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		FA01AB810B03E577004A54F4 /* YargController.m in Sources */ = {isa = PBXBuildFile; fileRef = FA01AB800B03E577004A54F4 /* YargController.m */; };
@@ -26,6 +25,8 @@
 		FA9A2BAD0DCAB4C1000FF5DC /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */; };
 		FA9A2C020DCAB519000FF5DC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8E08D20DBFE6E6004C42B0 /* Security.framework */; };
 		FAB700C00DADEF26009A6466 /* iconv3.icns in Resources */ = {isa = PBXBuildFile; fileRef = FAB700BF0DADEF26009A6466 /* iconv3.icns */; };
+		FABC18F40DE0E254007ACF16 /* YargTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FABC18F30DE0E254007ACF16 /* YargTests.m */; };
+		FABC191C0DE0EDD2007ACF16 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = FABC191A0DE0EDD2007ACF16 /* MainMenu.nib */; };
 		FACDD91F0B0D6AB9004E306D /* additions.m in Sources */ = {isa = PBXBuildFile; fileRef = FACDD91E0B0D6AB9004E306D /* additions.m */; };
 		FAF02F0B0DDE953700F5F3F0 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAF02F0A0DDE953600F5F3F0 /* Sparkle.framework */; };
 		FAF02F2E0DDE958200F5F3F0 /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = FAF02F0A0DDE953600F5F3F0 /* Sparkle.framework */; };
@@ -45,6 +46,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = FA4E30190DC66AAA0046C99F;
 			remoteInfo = InstallTool;
+		};
+		FABC18AC0DE0DF7C007ACF16 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D1107260486CEB800E47090 /* Yarg */;
+			remoteInfo = Yarg;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -79,7 +87,6 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		29B97319FDCFA39411CA2CEA /* MainMenu.nib */ = {isa = PBXFileReference; explicitFileType = file; path = MainMenu.nib; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* yarg_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = yarg_Prefix.pch; sourceTree = "<group>"; };
@@ -101,6 +108,11 @@
 		FA8E08D20DBFE6E6004C42B0 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
 		FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		FAB700BF0DADEF26009A6466 /* iconv3.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = iconv3.icns; sourceTree = "<group>"; };
+		FABC18A70DE0DF4A007ACF16 /* Yarg Unit Tests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yarg Unit Tests.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FABC18A80DE0DF4A007ACF16 /* Yarg Unit Tests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Yarg Unit Tests-Info.plist"; sourceTree = "<group>"; };
+		FABC18F20DE0E254007ACF16 /* YargTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YargTests.h; sourceTree = "<group>"; };
+		FABC18F30DE0E254007ACF16 /* YargTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YargTests.m; sourceTree = "<group>"; };
+		FABC191B0DE0EDD2007ACF16 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/MainMenu.nib; sourceTree = "<group>"; };
 		FACDD91D0B0D6AB9004E306D /* additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = additions.h; sourceTree = "<group>"; };
 		FACDD91E0B0D6AB9004E306D /* additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = additions.m; sourceTree = "<group>"; };
 		FACE766B0DD03AC800934DB0 /* HelperUninstall.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = HelperUninstall.sh; sourceTree = "<group>"; };
@@ -138,6 +150,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FABC18A40DE0DF49007ACF16 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -155,6 +174,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */,
 				FAF02F0A0DDE953600F5F3F0 /* Sparkle.framework */,
 				FA8E08D20DBFE6E6004C42B0 /* Security.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
@@ -178,6 +198,7 @@
 				8D1107320486CEB800E47090 /* Yarg.app */,
 				FA4E300D0DC66A8F0046C99F /* HelperTool */,
 				FA4E301A0DC66AAA0046C99F /* InstallTool */,
+				FABC18A70DE0DF4A007ACF16 /* Yarg Unit Tests.octest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -185,12 +206,14 @@
 		29B97314FDCFA39411CA2CEA /* yarg */ = {
 			isa = PBXGroup;
 			children = (
-				FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */,
+				FABC18C50DE0E189007ACF16 /* Libraries */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				FABC18F10DE0E1C0007ACF16 /* Scripts */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				FABC18A80DE0DF4A007ACF16 /* Yarg Unit Tests-Info.plist */,
 			);
 			name = yarg;
 			sourceTree = "<group>";
@@ -198,10 +221,6 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
-				FACE766B0DD03AC800934DB0 /* HelperUninstall.sh */,
-				FA4E303C0DC66BED0046C99F /* BetterAuthorizationSampleLib.h */,
-				FA4E303A0DC66BD90046C99F /* BetterAuthorizationSampleLibInstallTool.c */,
-				FA4E30330DC66BBC0046C99F /* BetterAuthorizationSampleLib.c */,
 				FA4E303D0DC66C940046C99F /* Common.h */,
 				FA4E309B0DC6B0650046C99F /* HelperTool.c */,
 				FA4E303E0DC66C940046C99F /* Common.c */,
@@ -209,8 +228,8 @@
 				FACDD91E0B0D6AB9004E306D /* additions.m */,
 				32CA4F630368D1EE00C91783 /* yarg_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
-				FAD841F30C0E0684001E7A83 /* makesourceball.sh */,
-				FAD841E70C0E0220001E7A83 /* package.sh */,
+				FABC18F20DE0E254007ACF16 /* YargTests.h */,
+				FABC18F30DE0E254007ACF16 /* YargTests.m */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -218,10 +237,10 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FABC191A0DE0EDD2007ACF16 /* MainMenu.nib */,
 				FA463F6E0DD2BAFC00D4DC5B /* Localizable.strings */,
 				FAB700BF0DADEF26009A6466 /* iconv3.icns */,
 				8D1107310486CEB800E47090 /* Info.plist */,
-				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
 				FAD841DF0C0E0099001E7A83 /* LICENSE.txt */,
 			);
 			name = Resources;
@@ -234,6 +253,26 @@
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FABC18C50DE0E189007ACF16 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				FA4E303C0DC66BED0046C99F /* BetterAuthorizationSampleLib.h */,
+				FA4E303A0DC66BD90046C99F /* BetterAuthorizationSampleLibInstallTool.c */,
+				FA4E30330DC66BBC0046C99F /* BetterAuthorizationSampleLib.c */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		FABC18F10DE0E1C0007ACF16 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				FACE766B0DD03AC800934DB0 /* HelperUninstall.sh */,
+				FAD841F30C0E0684001E7A83 /* makesourceball.sh */,
+				FAD841E70C0E0220001E7A83 /* package.sh */,
+			);
+			name = Scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -293,6 +332,25 @@
 			productReference = FA4E301A0DC66AAA0046C99F /* InstallTool */;
 			productType = "com.apple.product-type.tool";
 		};
+		FABC18A60DE0DF49007ACF16 /* Yarg Unit Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FABC18AB0DE0DF4A007ACF16 /* Build configuration list for PBXNativeTarget "Yarg Unit Tests" */;
+			buildPhases = (
+				FABC18A20DE0DF49007ACF16 /* Resources */,
+				FABC18A30DE0DF49007ACF16 /* Sources */,
+				FABC18A40DE0DF49007ACF16 /* Frameworks */,
+				FABC18A50DE0DF49007ACF16 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FABC18AD0DE0DF7C007ACF16 /* PBXTargetDependency */,
+			);
+			name = "Yarg Unit Tests";
+			productName = "Yarg Unit Tests";
+			productReference = FABC18A70DE0DF4A007ACF16 /* Yarg Unit Tests.octest */;
+			productType = "com.apple.product-type.bundle";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -315,6 +373,7 @@
 				8D1107260486CEB800E47090 /* Yarg */,
 				FA4E300C0DC66A8F0046C99F /* HelperTool */,
 				FA4E30190DC66AAA0046C99F /* InstallTool */,
+				FABC18A60DE0DF49007ACF16 /* Yarg Unit Tests */,
 			);
 		};
 /* End PBXProject section */
@@ -324,13 +383,36 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
 				FAB700C00DADEF26009A6466 /* iconv3.icns in Resources */,
 				FA463F700DD2BAFC00D4DC5B /* Localizable.strings in Resources */,
+				FABC191C0DE0EDD2007ACF16 /* MainMenu.nib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FABC18A20DE0DF49007ACF16 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FABC18A50DE0DF49007ACF16 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8D11072C0486CEB800E47090 /* Sources */ = {
@@ -364,6 +446,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FABC18A30DE0DF49007ACF16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FABC18F40DE0E254007ACF16 /* YargTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -377,24 +467,28 @@
 			target = FA4E30190DC66AAA0046C99F /* InstallTool */;
 			targetProxy = FA4E30200DC66AB60046C99F /* PBXContainerItemProxy */;
 		};
+		FABC18AD0DE0DF7C007ACF16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D1107260486CEB800E47090 /* Yarg */;
+			targetProxy = FABC18AC0DE0DF7C007ACF16 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				29B97319FDCFA39411CA2CEA /* MainMenu.nib */,
-			);
-			name = MainMenu.nib;
-			path = en.lproj;
-			sourceTree = "<group>";
-		};
 		FA463F6E0DD2BAFC00D4DC5B /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
 				FA463F6F0DD2BAFC00D4DC5B /* en */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		FABC191A0DE0EDD2007ACF16 /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FABC191B0DE0EDD2007ACF16 /* en */,
+			);
+			name = MainMenu.nib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -549,6 +643,60 @@
 			};
 			name = Release;
 		};
+		FABC18A90DE0DF4A007ACF16 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Yarg.app/Contents/MacOS/Yarg";
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Cocoa.framework/Headers/Cocoa.h";
+				INFOPLIST_FILE = "Yarg Unit Tests-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "Yarg Unit Tests";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		FABC18AA0DE0DF4A007ACF16 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Cocoa.framework/Headers/Cocoa.h";
+				INFOPLIST_FILE = "Yarg Unit Tests-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "Yarg Unit Tests";
+				WRAPPER_EXTENSION = octest;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -584,6 +732,15 @@
 			buildConfigurations = (
 				FA4E301C0DC66AAB0046C99F /* Debug */,
 				FA4E301D0DC66AAB0046C99F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FABC18AB0DE0DF4A007ACF16 /* Build configuration list for PBXNativeTarget "Yarg Unit Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FABC18A90DE0DF4A007ACF16 /* Debug */,
+				FABC18AA0DE0DF4A007ACF16 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
