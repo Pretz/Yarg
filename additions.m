@@ -68,23 +68,18 @@ inline void smartLog(NSString *format, ...) {
 }
 
 NSString *suffixForNum(int num) {
-    NSString * suffix;
     if (num < 10 || num > 19) {
         switch (num % 10) {
             case 1:
-                suffix = @"st";
-                break;
+                return @"st";
             case 2:
-                suffix = @"nd";
-                break;
+                return @"nd";
             case 3:
-                suffix = @"rd";
-                break;
+                return @"rd";
             default:
-                suffix = @"th";
+                return @"th";
         }
     } else {
-        suffix = @"th";
+        return @"th";
     }
-    return suffix;
 }

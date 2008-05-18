@@ -51,7 +51,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 8D1107260486CEB800E47090 /* Yarg */;
+			remoteGlobalIDString = 8D1107260486CEB800E47090;
 			remoteInfo = Yarg;
 		};
 /* End PBXContainerItemProxy section */
@@ -206,10 +206,10 @@
 		29B97314FDCFA39411CA2CEA /* yarg */ = {
 			isa = PBXGroup;
 			children = (
-				FABC18C50DE0E189007ACF16 /* Libraries */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				FABC18F10DE0E1C0007ACF16 /* Scripts */,
+				FABC18C50DE0E189007ACF16 /* Libraries */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
@@ -221,8 +221,8 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
-				FA4E303D0DC66C940046C99F /* Common.h */,
 				FA4E309B0DC6B0650046C99F /* HelperTool.c */,
+				FA4E303D0DC66C940046C99F /* Common.h */,
 				FA4E303E0DC66C940046C99F /* Common.c */,
 				FACDD91D0B0D6AB9004E306D /* additions.h */,
 				FACDD91E0B0D6AB9004E306D /* additions.m */,

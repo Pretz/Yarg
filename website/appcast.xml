@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"> 
+    <channel> 
+        <title>Yarg Changelog</title> 
+        <link>http://alex.turnlav.net/yarg/appcast.xml</link> 
+        <description>Most recent changes with links to updates.</description> 
+        <language>en</language>
+        <item> 
+            <title>Version 0.3</title> 
+            <description>http://alex.turnlav.net/yarg/downloads/0.3changes.html</description> 
+            <pubDate>Fri, 16 May 2008 22:42:18 -0700</pubDate>
+            <enclosure url="http://alex.turnlav.net/yarg/downloads/Yarg_0.3.dmg" length="1189584" type="application/octet-stream"/> 
+        </item> 
+        <item>
+            <title>Version 0.2</title> 
+            <description>http://alex.turnlav.net/yarg/downloads/0.2changes.html</description> 
+            <pubDate>Fri, 16 May 2008 22:13:31 -0700</pubDate>
+            <enclosure url="http://alex.turnlav.net/yarg/downloads/Yarg_0.2.dmg" length="202870" type="application/octet-stream"/> 
+        </item> 
+    </channel> 
+</rss> 
