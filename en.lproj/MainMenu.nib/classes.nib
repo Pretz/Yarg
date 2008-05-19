@@ -136,6 +136,19 @@
 			<key>SUPERCLASS</key>
 			<string>NSControl</string>
 		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>checkForUpdates</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>SUUpdater</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
 	</array>
 	<key>IBVersion</key>
 	<string>1</string>
