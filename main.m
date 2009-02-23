@@ -30,8 +30,12 @@ AuthorizationRef gAuth;
 int main(int argc, char *argv[])
 {
     
+    OSStatus    junk;
+    
     // Create the AuthorizationRef that we'll use through this application.
-    (void) AuthorizationCreate(NULL, NULL, kAuthorizationFlagDefaults, &gAuth);
+    junk = AuthorizationCreate(NULL, NULL, kAuthorizationFlagDefaults, &gAuth);
+    assert(junk == noErr);
+    assert( (junk == noErr) == (gAuth != NULL) );
     
     // For each of our commands, check to see if a right specification 
     // exists and, if not, create it. 
@@ -39,7 +43,7 @@ int main(int argc, char *argv[])
                        gAuth, 
                        kYargCommandSet, 
                        CFBundleGetIdentifier(CFBundleGetMainBundle()), 
-                       CFSTR("Localizable")
+                       NULL
                        );
     
     return NSApplicationMain(argc,  (const char **) argv);
