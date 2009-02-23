@@ -263,7 +263,7 @@ extern AuthorizationRef gAuth;
     if (! [job runAsRoot]) {
         rsyncTask = [[NSTask alloc] init];
         [rsyncTask setLaunchPath:[job rsyncPath]];
-        [rsyncTask setArguments:[[job rsyncArguments] arrayByAddingObject:@"--no-detach"]];
+        [rsyncTask setArguments:[job rsyncArguments]];
         smartLog(@"rsync args: %@", [job rsyncArguments]);
     }
     NSArray * arguments = [NSArray arrayWithObjects:sender, nil];
