@@ -20,3 +20,4 @@ rm ${APP}.dmg
 echo "Generating dmg, takes a bit..."
 hdiutil create -srcfolder $PACKDIR -format UDBZ -volname $APP ${APP}.dmg
 rm -rf $PACKDIR
+chmod a+r ${APP}.dmg
