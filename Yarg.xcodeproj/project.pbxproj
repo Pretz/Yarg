@@ -24,6 +24,7 @@
 		FA9A2BAB0DCAB4C1000FF5DC /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */; };
 		FA9A2BAD0DCAB4C1000FF5DC /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */; };
 		FA9A2C020DCAB519000FF5DC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8E08D20DBFE6E6004C42B0 /* Security.framework */; };
+		FAAE72E70FCF5D7C009C1780 /* rsync in Resources */ = {isa = PBXBuildFile; fileRef = FAAE72E60FCF5D7C009C1780 /* rsync */; };
 		FAB700C00DADEF26009A6466 /* iconv3.icns in Resources */ = {isa = PBXBuildFile; fileRef = FAB700BF0DADEF26009A6466 /* iconv3.icns */; };
 		FABC18F40DE0E254007ACF16 /* YargTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FABC18F30DE0E254007ACF16 /* YargTests.m */; };
 		FABC191C0DE0EDD2007ACF16 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = FABC191A0DE0EDD2007ACF16 /* MainMenu.nib */; };
@@ -107,6 +108,7 @@
 		FA4E309B0DC6B0650046C99F /* HelperTool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = HelperTool.c; sourceTree = "<group>"; };
 		FA8E08D20DBFE6E6004C42B0 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
 		FA9A2BAA0DCAB4C1000FF5DC /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		FAAE72E60FCF5D7C009C1780 /* rsync */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = rsync; sourceTree = "<group>"; };
 		FAB700BF0DADEF26009A6466 /* iconv3.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = iconv3.icns; sourceTree = "<group>"; };
 		FABC18A70DE0DF4A007ACF16 /* Yarg Unit Tests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yarg Unit Tests.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FABC18A80DE0DF4A007ACF16 /* Yarg Unit Tests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Yarg Unit Tests-Info.plist"; sourceTree = "<group>"; };
@@ -237,6 +239,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FAAE72E60FCF5D7C009C1780 /* rsync */,
 				FABC191A0DE0EDD2007ACF16 /* MainMenu.nib */,
 				FA463F6E0DD2BAFC00D4DC5B /* Localizable.strings */,
 				FAB700BF0DADEF26009A6466 /* iconv3.icns */,
@@ -386,6 +389,7 @@
 				FAB700C00DADEF26009A6466 /* iconv3.icns in Resources */,
 				FA463F700DD2BAFC00D4DC5B /* Localizable.strings in Resources */,
 				FABC191C0DE0EDD2007ACF16 /* MainMenu.nib in Resources */,
+				FAAE72E70FCF5D7C009C1780 /* rsync in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

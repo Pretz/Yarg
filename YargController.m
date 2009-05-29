@@ -354,7 +354,7 @@ extern AuthorizationRef gAuth;
             NSEnumerator * lineEnum = [lines objectEnumerator];
             NSString * line;
             while ((line = [lineEnum nextObject])) {
-                [self setProgressForOutput:line];
+                [self performSelectorOnMainThread:@selector(setProgressForOutput:) withObject:line waitUntilDone:NO];
             }
         }
         smartLog(@"Finished with rsync loop");
