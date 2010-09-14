@@ -2,106 +2,114 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
  <head>
-    	<title>yet another rsync gui: super simple backups on os x</title>
-    	<style type="text/css">
-    	body {
-    		margin: 0px;
-    		border: 0px;
-    		text-align: center;	
-    	}
-    	#page {
-    		text-align: left;
-    		border: .5em solid #a2c7d3;
-    		border-top: none;
-    		padding: 0px 1em 0px 1em;
-    		height: 100%;
-    		width: 45em;
-    		margin: auto;
-	   		font-family: Helvetica, Arial, sans-serif;
-    	}
-    	#header {
-    		text-align: center;
-    		margin-bottom: 1em;
-    	}
-    	h1 {
-    		font-size: 2.6em;
-    	}
-    	p {
-    		padding-left: 1em;
-    		padding-right: 1em;
-    		font-size: 1em;
-    	}
-    	.rightpic {
-    		float: right;
-    		margin: 0px 0px 1em 1em;
-    	}
-    	.leftpic {
-    		float: left;
-    		margin: 0px 1em 1em 0px;
-    	}
-    	#lang {
-    		color: silver;
-    		font-size: .7em;
-    	}
-    	</style>
+        <title>yet another rsync gui: super simple backups on os x</title>
+        <style type="text/css">
+        body {
+                margin: 0px;
+                border: 0px;
+                text-align: center;
+        }
+        #page {
+                text-align: left;
+                border: .5em solid #a2c7d3;
+                border-top: none;
+                padding: 0px 1em 0px 1em;
+                height: 100%;
+                width: 45em;
+                margin: auto;
+                        font-family: Helvetica, Arial, sans-serif;
+        }
+        #header {
+                text-align: center;
+                margin-bottom: 1em;
+        }
+        h1 {
+                font-size: 2.6em;
+        }
+        p {
+                padding-left: 1em;
+                padding-right: 1em;
+                font-size: 1em;
+        }
+        .rightpic {
+                float: right;
+                margin: 0px 0px 1em 1em;
+        }
+        .leftpic {
+                float: left;
+                margin: 0px 1em 1em 0px;
+        }
+        #lang {
+                color: silver;
+                font-size: .7em;
+        }
+        </style>
  </head>
  <body>
   <div id="page">
- 	<div id="header">
- 	<img src="webpg.png" /><br />
- 	<span id="lang"><a href="">pirate</a> &bull; english (coming soon) &bull; no other languages yet</span>
- 	</div>
+        <div id="header">
+        <img src="webpg.png" /><br />
+        <span id="lang"><a href="">pirate</a> &bull; english (coming soon) &bull; no other languages yet</span>
+        </div>
 
- 	<p> 	<img src="middleLep.png" class="leftpic" /></p>
- 	<p style="margin-top: 1.2em">
- 	<strong>Avast!</strong> If ya be like most landlubbers I'd be willin' ta wager that yer 
- 	precious treasures be lyin' unprotected in the depths o' yer hold.  Those of us who've got some
- 	experience know that the safest place to store yer precious files be buried deep in some safe place.</p>
- 	<p>Ships and laptops be fragile things that can be sunk, and if yer ship sinks yer gon'ta lose everything on it.
- 	Some of y'all 'ave prolly got some external hard drives or summat, but I'll bet you never remember to 
- 	back up!
- 	</p>
- 	<p style="clear: both"> <img src="calLep.png" class="rightpic" />
- 	<strong>Yarg</strong> be the easiest, quickest, and free-est backup
- 	 program I been across in me travels across this great big internet.
- 	 It's so simple I made it all by myself for <a href="http://msdosx.berkeley.edu/">
- 	 a class at th' Berkeley Institute O' Piratry</a>.</p>
- 	 <p>All it be doing is copyin' files from one place t' another. <strong>But arrrr, there's a twist!</strong>
- 	 Fer one, Yarg always be rememberin' when ta run yer backups. Ya never haffa remember to press any more buttons
- 	 or drag any files aroun'.</p>
- 	 
- 	 <p style="clear: both"><img src="rightLep.png" class="leftpic" /><br />
- 	 Fer another, Yarg don't be likin' ta drag aroun' the same old files over and over again. Instead, 
- 	  yarg drives tha <strong>unix rudder</strong> o' OS X.  Using tha tried 'n  true 
- 	  <strong><a href="http://samba.anu.edu.au/rsync/">rsync</a></strong> program that comes with OS X, yarg makes
- 	  sure t' only move aroun' them files that are <strong>new or changed</strong>.</p>
- 	  <p>Lastly, yarg uses <a href="http://launchd.macosforge.org/">launchd</a> ta make sure backups run whenever
- 	  you tell 'em to, and t' make sure they play nice with tha rest o' yer system.
- 	  <p>Fer advanced users who've got their sea legs, Yarg lets ya take advantage of the fancy features of rsync,
- 	  such as <strong>backing up to an external site via ssh</strong> and <strong>custom exclude lists</strong>.
- 	   Pretty fancy, eh?</p>
- 	   <p style="clear: both"> By now I'll bet ye just be wantin tha software. And it be available right here,
- 	   right now, fer no dubloons whatsoever!</p>
- 	   
- 	   <p><strong><a href="downloads/Yarg_0.3.1.dmg">Download Yarg v0.3.1 beta</a></strong> released 2-23-09 (.5mb dmg, universal, english only, os x 10.4.11+)</p>
- 	   
- 	   <p> If ye be havin' any questions,
- 	     comments, bug reports er whatnot, please be sendin' a message my way to yarg [at] turnlav dot net
- 	     </p>
- 	   
- 	   <p><em>NOTE: </em>I be releasin' Yarg under the GNU GPL license mostly because I be a student and
- 	    did it mostly fer tha learnin' and not fer dubloons. Yarg don't yet be havin' much in the way o'
- 	    documentation or nuthin yet, but I think it be pretty self-explanatory. Yarg was inspired by the
- 	    utter uselessness of <a href="http://archive.macosxlabs.org/rsyncx/rsyncx.html">rsyncx</a> and the
- 	    user interface, but not the functionality, of <a href="http://psyncx.sourceforge.net/">psyncx</a> 
- 	    (both of which seem to be abandoned).</p>
- 	    
- 	    <p>If ye be an advanced user er sumthin, ye can be downloadin the source code fer the latest
- 	    version right here: <a href="downloads/yargv03source.tgz">yarg v0.3 beta source</a>.  Ye can also browse
- 	    th' codes 'n ciphers at me <a href="http://yarg.rilegio.us/">traccarrr</a>; just click thar yonder <a href="http://yarg.rilegio.us/browser/trunk">
- 	    source</a> button.</p>
- 	   
+        <p>     <img src="middleLep.png" class="leftpic" /></p>
+        <p style="margin-top: 1.2em">
+        <strong>Avast!</strong> If ya be like most landlubbers I'd be willin' ta wager that yer
+        precious treasures be lyin' unprotected in the depths o' yer hold.  Those of us who've got some
+        experience know that the safest place to store yer precious files be buried deep in some safe place.</p>
+        <p>Ships and laptops be fragile things that can be sunk, and if yer ship sinks yer gon'ta lose everything on it.
+        Some of y'all 'ave prolly got some external hard drives or summat, but I'll bet you never remember to
+        back up!
+        </p>
+        <p style="clear: both"> <img src="calLep.png" class="rightpic" />
+        <strong>Yarg</strong> be the easiest, quickest, and free-est backup
+         program I been across in me travels across this great big internet.
+         It's so simple I made it all by myself for <a href="http://msdosx.berkeley.edu/">
+         a class at th' Berkeley Institute O' Piratry</a>.</p>
+         <p>All it be doing is copyin' files from one place t' another. <strong>But arrrr, there's a twist!</strong>
+         Fer one, Yarg always be rememberin' when ta run yer backups. Ya never haffa remember to press any more buttons
+         or drag any files aroun'.</p>
+
+         <p style="clear: both"><img src="rightLep.png" class="leftpic" /><br />
+         Fer another, Yarg don't be likin' ta drag aroun' the same old files over and over again. Instead,
+          yarg drives tha <strong>unix rudder</strong> o' OS X.  Using tha tried 'n  true
+          <strong><a href="http://samba.anu.edu.au/rsync/">rsync</a></strong> program that comes with OS X, yarg makes
+          sure t' only move aroun' them files that are <strong>new or changed</strong>.</p>
+          <p>Lastly, yarg uses <a href="http://launchd.macosforge.org/">launchd</a> ta make sure backups run whenever
+          you tell 'em to, and t' make sure they play nice with tha rest o' yer system.
+          <p>Fer advanced users who've got their sea legs, Yarg lets ya take advantage of the fancy features of rsync,
+          such as <strong>backing up to an external site via ssh</strong> and <strong>custom exclude lists</strong>.
+           Pretty fancy, eh?</p>
+           <p style="clear: both"> By now I'll bet ye just be wantin tha software. And it be available right here,
+           right now, fer no dubloons whatsoever!</p>
+
+           <p><strong><a href="downloads/Yarg_0.3.1.dmg">Download Yarg v0.3.1 beta</a></strong> released 2-23-09 (.5mb dmg, universal, english only, os x 10.4.11+)</p>
+
+           <p> If ye be havin' any questions,
+             comments, bug reports er whatnot, please be sendin' a message my way to yarg [at] turnlav dot net
+             </p>
+
+           <p><em>NOTE: </em>I be releasin' Yarg under the GNU GPL license mostly because I be a student and
+            did it mostly fer tha learnin' and not fer dubloons. Yarg don't yet be havin' much in the way o'
+            documentation or nuthin yet, but I think it be pretty self-explanatory. Yarg was inspired by the
+            utter uselessness of <a href="http://archive.macosxlabs.org/rsyncx/rsyncx.html">rsyncx</a> and the
+            user interface, but not the functionality, of <a href="http://psyncx.sourceforge.net/">psyncx</a>
+            (both of which seem to be abandoned).</p>
+
+            <p>If ye be an advanced user er sumthin, ye can be downloadin the source code fer the latest
+            version right here: <a href="downloads/yargv03source.tgz">yarg v0.3 beta source</a>.  Ye can also browse
+            th' codes 'n ciphers at me <a href="http://yarg.rilegio.us/">traccarrr</a>; just click thar yonder <a href="http://yarg.rilegio.us/browser/trunk">
+            source</a> button.</p>
+
   <div style="clear: both">&nbsp;</div>
   <div>
- </body>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6412874-1");
+pageTracker._trackPageview();
+} catch(err) {}</script> </body>
 </html>
